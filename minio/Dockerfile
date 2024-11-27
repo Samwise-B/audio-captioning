@@ -1,15 +1,21 @@
-# Use the official MinIO image as the base
-FROM minio/minio:latest
+# Use a Python base image
+FROM python:3.10-slim
 
-# Install Python for running the init.py script
-RUN apt-get update && apt-get install -y python3 python3-pip
+# Install MinIO server
+RUN apt-get update && apt-get install -y wget \
+    && wget https://dl.min.io/server/minio/release/linux-amd64/minio \
+    && chmod +x minio \
+    && mv minio /usr/local/bin/
+
+# Install required Python packages
+RUN pip install minio
 
 # Set working directory
 WORKDIR /app
 
 # Copy initialization scripts
-COPY init.py /app/init.py
-COPY init.sh /app/init.sh
+COPY init_minio.py /app/init.py
+COPY init_server.sh /app/init.sh
 
 # Make the init.sh script executable
 RUN chmod +x /app/init.sh
@@ -18,4 +24,4 @@ RUN chmod +x /app/init.sh
 EXPOSE 9000 9001
 
 # Entry point to initialize buckets and start the MinIO server
-ENTRYPOINT ["/app/init_server.sh"]
+ENTRYPOINT ["/app/init.sh"]

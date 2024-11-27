@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from minio import Minio
 from minio.error import S3Error
 
@@ -10,7 +11,7 @@ def create_buckets():
     minio_secret_key = os.getenv("MINIO_ROOT_PASSWORD", "minioadmin")
 
     # List of buckets to initialize
-    buckets = ["bucket1", "bucket2", "bucket3"]
+    buckets = ["models", "audio"]
 
     # Create MinIO client
     client = Minio(
@@ -30,6 +31,17 @@ def create_buckets():
                 print(f"Bucket '{bucket}' already exists.")
         except S3Error as e:
             print(f"Error creating bucket '{bucket}': {e}")
+
+    model_dir = Path("/weights")
+    for file_path in model_dir.glob("*"):
+        if file_path.is_file():
+            file_name = file_path.name
+            try:
+                print(f"Uploading {file_name} to bucket")
+                client.fput_object("models", file_name, str(file_path))
+                print(f"Successfully uploaded {file_name}")
+            except Exception as e:
+                print(f"Error uploading {file_name}: {e}")
 
 
 if __name__ == "__main__":

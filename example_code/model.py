@@ -8,7 +8,7 @@ print(os.getcwd())
 
 
 model = whisper.load_model("tiny")
-audio = whisper.load_audio("backend/hello.wav")
+audio = whisper.load_audio("example_code/hello.wav")
 audio = whisper.pad_or_trim(audio)
 mel = whisper.log_mel_spectrogram(audio)
 tk = whisper.tokenizer.get_tokenizer(multilingual=True)

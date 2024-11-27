@@ -9,3 +9,4 @@ tiktoken
 ffmpeg
 soundfile
 librosa
+pydub

@@ -12,3 +12,5 @@ fastapi
 requests
 uvicorn
 minio
+pydub
+transformers

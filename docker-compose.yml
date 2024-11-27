@@ -36,6 +36,21 @@ services:
     networks:
       - app_network
 
+  minio:
+    build:
+      context: ./minio
+    container_name: minio
+    environment:
+      - MINIO_ROOT_USER=$MINIO_ROOT_USER
+      - MINIO_ROOT_PASSWORD=$MINIO_PASSWORD
+    volumes:
+      - ./weights:/app/weights
+    expose:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - app_network
+
 networks:
   app_network:
     driver: bridge

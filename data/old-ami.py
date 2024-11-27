@@ -59,7 +59,7 @@ if __name__ == "__main__":
     processor = WhisperProcessor.from_pretrained("openai/whisper-tiny")
     ami_dataset = AMIDataset(ds, split="train", limit=5, processor=processor)
 
-    dataloader = DataLoader(dataset=ami_dataset, batch_size=1, collate_fn=collate_fn)
+    dataloader = DataLoader(dataset=ami_dataset, batch_size=1, collate_fn="REMOVED")
 
     # Get first batch
     try:

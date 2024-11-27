@@ -94,16 +94,22 @@ class Ami(Dataset):
         )
         audio_inpt = preprocessed["input_features"]
         audio_mask = preprocessed["attention_mask"]
+        cap_inpt = caption[:-1]
+        cap_targ = caption[1:]
         # audio_features = audio_features[]
-        return audio_inpt, audio_mask, caption
+        return audio_inpt, audio_mask, cap_inpt, cap_targ
 
     def collate_fn(batch):
-        audios, masks, captions = zip(*batch)
+        audios, masks, cap_inpts, cap_targs = zip(*batch)
 
         audio_batch = torch.cat(audios, dim=0)
         mask_batch = torch.cat(masks, dim=0)
-        padded_caption_batch = pad_sequence(captions, batch_first=True)
-        return audio_batch, mask_batch, padded_caption_batch
+        stacked_targs = torch.cat(cap_targs, dim=0)
+        padded_cap_inpts = pad_sequence(cap_inpts, batch_first=True)
+
+        cap_lens = [len(t) for t in cap_targs]
+
+        return audio_batch, mask_batch, padded_cap_inpts, stacked_targs, cap_lens
 
 
 if __name__ == "__main__":

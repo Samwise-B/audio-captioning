@@ -23,8 +23,8 @@ def get_start_input_ids(tokenizer):
     input_ids += [no_timestamps_token_id]
     return input_ids
 
-def get_input_tensor(input_ids):
-    input_tkns = torch.tensor(input_ids).unsqueeze(0).to(model.device)
+def get_input_tensor(input_ids, device):
+    input_tkns = torch.tensor(input_ids).unsqueeze(0).to(device)
     return input_tkns
 
 def get_target_input_ids(transcript, tokenizer):
@@ -37,7 +37,7 @@ def add_speaker_tokens_to_whisper(model_name="openai/whisper-tiny", speaker_labe
     Add custom speaker tokens to a Whisper model's tokenizer and processor
     """
     if speaker_labels is None:
-        speaker_labels = [f"<speaker_{i}>" for i in range(1, 5)]
+        speaker_labels = [f"<|speaker_{i}|>" for i in range(1, 5)]
     
     # Initialize components
     processor = WhisperProcessor.from_pretrained(model_name)

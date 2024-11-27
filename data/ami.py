@@ -2,7 +2,9 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from transformers import WhisperTokenizer, WhisperFeatureExtractor
 from datasets import load_dataset
-import whisper
+from torch.nn.utils.rnn import pad_sequence
+
+# import whisper
 
 
 class Ami(Dataset):
@@ -11,14 +13,18 @@ class Ami(Dataset):
         self.ds = load_dataset("edinburghcstr/ami", "ihm", trust_remote_code=True)
         self.ds = self.ds[split]
         self.tk = WhisperTokenizer.from_pretrained("openai/whisper-base")
-        self.extractor = WhisperFeatureExtractor.from_pretrained("openai/whisper-base")
+        self.extractor = WhisperFeatureExtractor()
         self.max_speakers = max_speakers
         self.speaker_labels = [f"<|speaker_{i}|>" for i in range(1, max_speakers + 1)]
         self.tk.add_tokens(self.speaker_labels, special_tokens=True)
+        self.tk_to_id = self.tk.convert_tokens_to_ids
+        self.speaker_labels = [
+            self.tk_to_id(f"<|speaker_{i}|>") for i in range(1, max_speakers + 1)
+        ]
         self.max_chunk_size = 30 * 16000
 
     def __len__(self):
-        return len(self.ds[self.split])
+        return len(self.ds)
 
     def __getitem__(self, idx):
         """
@@ -30,20 +36,36 @@ class Ami(Dataset):
         speaker_id = row["speaker_id"]
         speaker_count = 0
         speaker_to_id = {speaker_id: self.speaker_labels[speaker_count]}
-        caption = f"{speaker_to_id[speaker_id]} {row["text"].lower()} "
+
+        caption = []
+
+        if self.ds[idx - 1]["meeting_id"] != meeting_id:
+            caption = (
+                [self.tk_to_id("<|startoftranscript|>")]
+                + [self.tk_to_id("<|en|>")]
+                + [self.tk_to_id("<|transcribe|>")]
+                + [self.tk_to_id("<|notimestamps|>")]
+            )
+
+        caption += [speaker_to_id[speaker_id]] + self.tk.encode(
+            f" {row["text"].lower()} ", add_special_tokens=False
+        )
         audio = torch.tensor(row["audio"]["array"])
+
         while len(audio) < self.max_chunk_size:
-            print(meeting_id)
-            print(speaker_to_id)
-            print(speaker_count)
-            print(audio.shape)
-            print(caption)
+            # print(meeting_id)
+            # print(speaker_to_id)
+            # print(speaker_count)
+            # print(audio.shape)
+            # print(caption)
 
             row = self.ds[idx + row_count]
             row_count += 1
 
             # check if new meeting
             if meeting_id != row["meeting_id"]:
+                caption += self.tk_to_id("<|endoftext|>")
+                # add end of transcript
                 break
 
             # check if audio length exceeds max_size
@@ -61,20 +83,33 @@ class Ami(Dataset):
 
             new_audio = torch.tensor(row["audio"]["array"])
             audio = torch.cat((audio, new_audio), dim=0)
-            caption += f"{speaker_to_id[speaker_id]} {row["text"].lower()} "
+            caption += [speaker_to_id[speaker_id]] + self.tk.encode(
+                f" {row["text"].lower()} ", add_special_tokens=False
+            )
 
-        audio_features = self.extractor(audio)
-        return audio.unsqueeze(0), torch.tensor(self.tk.encode(caption)).unsqueeze(0)
+        print(caption)
+        caption = torch.tensor(caption)
+        preprocessed = self.extractor(
+            audio, sampling_rate=16000, return_tensors="pt", return_attention_mask=True
+        )
+        audio_inpt = preprocessed["input_features"]
+        audio_mask = preprocessed["attention_mask"]
+        # audio_features = audio_features[]
+        return audio_inpt, audio_mask, caption
 
     def collate_fn(batch):
-        pass
+        audios, masks, captions = zip(*batch)
+
+        audio_batch = torch.cat(audios, dim=0)
+        mask_batch = torch.cat(masks, dim=0)
+        padded_caption_batch = pad_sequence(captions, batch_first=True)
+        return audio_batch, mask_batch, padded_caption_batch
 
 
 if __name__ == "__main__":
     dataset = Ami("train")
-    # dataloader = DataLoader(dataset, batch_size=1)
-    model = whisper.load_model("tiny")
     row = dataset[0]
-    pass
-    # for batch in dataloader:
-    #     continue
+    dataloader = DataLoader(dataset, batch_size=2, collate_fn=Ami.collate_fn)
+
+    for batch in dataloader:
+        continue

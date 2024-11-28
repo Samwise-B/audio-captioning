@@ -1,5 +1,6 @@
 import torch
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
+import whisper
 
 def get_start_input_ids(tokenizer):
     input_ids = []
@@ -19,9 +20,22 @@ def get_start_input_ids(tokenizer):
     input_ids += [no_timestamps_token_id]
     return input_ids
 
-# def get_input_tensor(input_ids, device):
-#     input_tkns = torch.tensor(input_ids).unsqueeze(0).to(device)
-#     return input_tkns
+def collate_fn(batch):
+    # Handle audio padding
+    audio_features = [whisper.log_mel_spectrogram(item['audio'].squeeze()) for item in batch]
+    padded_audio = torch.nn.utils.rnn.pad_sequence(audio_features, batch_first=True)
+    
+    # Handle text padding using HF
+    texts = [item['transcript'] for item in batch]
+    processor, _ = add_speaker_tokens_to_whisper()
+    tokenizer = processor.tokenizer
+    tokenized = tokenizer(texts, padding=True, return_tensors="pt")
+    
+    return {
+        'audio': padded_audio,
+        'input_ids': tokenized.input_ids,
+        'attention_mask': tokenized.attention_mask
+    }
 
 def get_target_input_ids(transcript, tokenizer):
     input_ids = get_start_input_ids(tokenizer)

@@ -8,8 +8,7 @@ import tempfile
 import json
 
 from data.utils import process_transcript_json
-from training.sam_r_train import collate_fn
-from training.utils import add_speaker_tokens_to_whisper
+from training.utils import collate_fn
 class HomegrownDataset(Dataset):
     """
     PyTorch Dataset for speaker diarization training data with M4A support

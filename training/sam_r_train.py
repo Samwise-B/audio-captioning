@@ -1,10 +1,8 @@
-import whisper
-
 import torch
 from torch.utils.data import DataLoader
 
 from data.homegrown import HomegrownDataset
-from training.utils import add_speaker_tokens_to_whisper, clean_prediction, get_start_input_ids
+from training.utils import add_speaker_tokens_to_whisper, collate_fn, get_start_input_ids
 
 processor, model = add_speaker_tokens_to_whisper()
 tokenizer = processor.tokenizer
@@ -15,21 +13,6 @@ notimestamps_token_id = tokenizer.convert_tokens_to_ids('<|notimestamps|>')
 
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 criterion = torch.nn.CrossEntropyLoss()
-
-def collate_fn(batch):
-    # Handle audio padding
-    audio_features = [whisper.log_mel_spectrogram(item['audio'].squeeze()) for item in batch]
-    padded_audio = torch.nn.utils.rnn.pad_sequence(audio_features, batch_first=True)
-    
-    # Handle text padding using HF
-    texts = [item['transcript'] for item in batch]
-    tokenized = tokenizer(texts, padding=True, return_tensors="pt")
-    
-    return {
-        'audio': padded_audio,
-        'input_ids': tokenized.input_ids,
-        'attention_mask': tokenized.attention_mask
-    }
 
 def validate_batch(model, audio):
     model.eval()
@@ -92,17 +75,21 @@ def train(model, input_mel, input_tensor, target_tensor, mask):
         total_loss += loss.item()
         print(f"Step {step}, Loss: {loss.item()}")
 
-dataset = HomegrownDataset(split='train')
-dataloader = DataLoader(dataset, batch_size=2, collate_fn=collate_fn)
+def main():
+    dataset = HomegrownDataset(split='train')
+    dataloader = DataLoader(dataset, batch_size=2, collate_fn=collate_fn)
 
-for i, batch in enumerate(dataloader):
-    audio = batch['audio']
+    for i, batch in enumerate(dataloader):
+        audio = batch['audio']
 
-    # shifting for teacher forcing
-    input_ids = batch['input_ids'][:, :-1].contiguous()
-    attention_mask = batch['attention_mask'][:, :-1].contiguous()
-    target_ids = batch['input_ids'][:, 1:].clone().contiguous()
+        # shifting for teacher forcing
+        input_ids = batch['input_ids'][:, :-1].contiguous()
+        attention_mask = batch['attention_mask'][:, :-1].contiguous()
+        target_ids = batch['input_ids'][:, 1:].clone().contiguous()
 
-    train(model, audio, input_ids, target_ids, attention_mask)
-    validate_batch(model, audio)
-torch.save(model.state_dict(), "./weights/whisper_diarization_weights.pth")
+        train(model, audio, input_ids, target_ids, attention_mask)
+        validate_batch(model, audio)
+    torch.save(model.state_dict(), "./weights/whisper_diarization_weights.pth")
+
+if __name__ == "__main__":
+    main()

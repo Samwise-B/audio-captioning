@@ -19,7 +19,6 @@ class Ami(Dataset):
         self.ds = load_dataset("edinburghcstr/ami", "ihm", trust_remote_code=True)
         self.ds = self.ds[split]
         self.subset_size = subset_size
-        self.indices = list(range(subset_size))
 
         self.tk = WhisperTokenizer.from_pretrained("openai/whisper-base")
         self.extractor = WhisperFeatureExtractor()
@@ -62,7 +61,7 @@ class Ami(Dataset):
             )
 
         caption += [speaker_to_id[speaker_id]] + self.tk.encode(
-            f" {row["text"].lower()} ", add_special_tokens=False
+            f" {row['text'].lower()} ", add_special_tokens=False
         )
         audio = torch.tensor(row["audio"]["array"])
 
@@ -78,7 +77,7 @@ class Ami(Dataset):
 
             # check if new meeting
             if meeting_id != row["meeting_id"]:
-                caption += self.tk_to_id("<|endoftext|>")
+                caption += [self.tk_to_id("<|endoftext|>")]
                 # add end of transcript
                 break
 
@@ -98,7 +97,7 @@ class Ami(Dataset):
             new_audio = torch.tensor(row["audio"]["array"])
             audio = torch.cat((audio, new_audio), dim=0)
             caption += [speaker_to_id[speaker_id]] + self.tk.encode(
-                f" {row["text"].lower()} ", add_special_tokens=False
+                f" {row['text'].lower()} ", add_special_tokens=False
             )
 
         # print(caption)
@@ -132,4 +131,4 @@ if __name__ == "__main__":
     dataloader = DataLoader(dataset, batch_size=2, collate_fn=Ami.collate_fn)
 
     for batch in dataloader:
-        continue
+        break

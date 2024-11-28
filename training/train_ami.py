@@ -14,6 +14,14 @@ from data.ami import Ami
 from models.whisper import Whisper
 from utils.inference import run_inference
 
+model_dir = Path(__file__).parent.parent / "weights"
+
+# Check if the directory exists
+if not model_dir.exists():
+    # Create the directory
+    model_dir.mkdir(parents=True, exist_ok=True)
+    print(f"Directory created: {model_dir}")
+
 torch.manual_seed(42)
 logging.basicConfig(
     filename="training.log",  # File to log to
@@ -22,8 +30,8 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",  # Log format
 )
 
-subset_size = 10
-batch_size = 10
+subset_size = None
+batch_size = 32
 ds = Ami("train", subset_size=subset_size)
 dataloader = DataLoader(ds, batch_size=batch_size, collate_fn=Ami.collate_fn)
 
@@ -34,7 +42,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 model = Whisper()
 model.to(device)
-model_name = "whisper-diarization"
+model_name = "whisper-diarization-full"
 
 print(
     f"Number of parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad)}"
@@ -43,7 +51,7 @@ print(
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 criterion = torch.nn.CrossEntropyLoss()
 
-val_freq = (ds.__len__() // batch_size) / 1
+val_freq = (ds.__len__() // batch_size) / 5
 num_epochs = 1000
 
 config = {
@@ -54,11 +62,13 @@ config = {
     "val_freq": val_freq,
 }
 
-wandb.init(project="image-captioning", name=model_name, config=config)
+wandb.init(project="audio-captioning", name=model_name, config=config)
 running_loss = []
 running_accuracy = []
 for epoch in range(num_epochs):
-    for i, (audio, masks, cap_inpt, cap_targ, cap_lens) in enumerate(dataloader):
+    for idx, (audio, masks, cap_inpt, cap_targ, cap_lens) in enumerate(
+        tqdm(dataloader, desc=f"Training {epoch}")
+    ):
         audio, masks, cap_inpt, cap_targ = (
             audio.to(device),
             masks.to(device),
@@ -71,8 +81,8 @@ for epoch in range(num_epochs):
         pred = out.logits
 
         cropped_pred = torch.cat(
-            [x[: cap_lens[i]] for i, x in enumerate(pred)], dim=0, device=device
-        )
+            [x[: cap_lens[i]] for i, x in enumerate(pred)], dim=0
+        ).to(device)
         loss = criterion(cropped_pred, cap_targ)
         loss.backward()
         optimizer.step()
@@ -82,19 +92,31 @@ for epoch in range(num_epochs):
         running_accuracy.append(precision)
         # print(f"epoch: {epoch} loss: {loss.item()}, precision: {precision}", end="\r")
 
-    if (epoch + 1) % val_freq == 0:
+    if (idx + 1) % val_freq == 0:
+        torch.save(
+            model.state_dict(),
+            model_dir / f"{model_name}.pt",
+        )
+        wandb.save(
+            str(model_dir / f"{model_name}.pt"),
+            base_path=str(model_dir),
+        )
         logging.info("Running inference...")
         o, t = run_inference(model, ds, 0, 100)
         logging.info(f"Inference: \n{o}")
         logging.info("=======================")
         logging.info(f"Target: \n{t}")
 
+        # clear training batch from memory
+        del audio, masks, cap_inpt, cap_targ, cap_lens, pred, cropped_pred, loss
+        torch.cuda.empty_cache()
+
         # validation loop
         with torch.inference_mode():
             val_loss = []
             val_accuracy = []
-            for i, (audio, masks, cap_inpt, cap_targ, cap_lens) in enumerate(
-                val_loader
+            for audio, masks, cap_inpt, cap_targ, cap_lens in tqdm(
+                val_loader, desc="Validation"
             ):
                 audio, masks, cap_inpt, cap_targ = (
                     audio.to(device),
@@ -106,8 +128,8 @@ for epoch in range(num_epochs):
                 out = model(audio, masks, cap_inpt)
                 pred = out.logits
                 cropped_pred = torch.cat(
-                    [x[: cap_lens[i]] for i, x in enumerate(pred)], dim=0, device=device
-                )
+                    [x[: cap_lens[i]] for i, x in enumerate(pred)], dim=0
+                ).to(device)
 
                 loss = criterion(cropped_pred, cap_targ)
 
@@ -118,7 +140,7 @@ for epoch in range(num_epochs):
                 val_accuracy.append(precision)
         wandb.log(
             {
-                "loss": running_loss / len(running_loss),
+                "loss": sum(running_loss) / len(running_loss),
                 "precision": sum(running_accuracy) / len(running_accuracy),
                 "val_loss": sum(val_loss) / len(val_loss),
                 "vali_precision": sum(val_accuracy) / len(val_accuracy),
@@ -128,3 +150,13 @@ for epoch in range(num_epochs):
         running_loss = []
         val_accuracy = []
         val_loss = []
+
+torch.save(
+    model.state_dict(),
+    model_dir / f"final_model.pt",
+)
+wandb.save(
+    str(model_dir / f"final_model.pt"),
+    base_path=str(model_dir),
+)
+wandb.finish()

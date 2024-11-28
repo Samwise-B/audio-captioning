@@ -11,7 +11,7 @@ def run_inference(model, ds, i: int, max_len: int):
     with torch.inference_mode():
         # idx = random.randint(0, ds.__len__())
         (audio, masks, _, cap_targ, _) = ds[i]
-        masks = masks.to(device)
+        audio, masks = audio.to(device), masks.to(device)
         cap_targ = cap_targ.to(device)
         inpt = torch.tensor(
             [tk_to_id("<|startoftranscript|>")]

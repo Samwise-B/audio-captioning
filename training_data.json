@@ -1,27 +1,6 @@
 [
   {
-    "audio_path": "1coffee.m4a",
-    "speaker_turns": [
-      {
-        "speaker": "1",
-        "text": "Hi there! I'd like to order a large cappuccino with oat milk, please."
-      },
-      {
-        "speaker": "2",
-        "text": "Of course! Would you like any flavoring syrups with that?"
-      },
-      {
-        "speaker": "1",
-        "text": "Yes, could I get vanilla syrup, but just one pump?"
-      },
-      {
-        "speaker": "2",
-        "text": "So think that would be 5.75 would you like your receipt? No I see, me that thank you, I'll pay with card."
-      }
-    ]
-  },
-  {
-    "audio_path": "2library.m4a",
+    "audio_path": "1library.m4a",
     "speaker_turns": [
       {
         "speaker": "1",
@@ -42,6 +21,27 @@
       {
         "speaker": "1",
         "text": "Yes, could I renew the mystery novel for another two weeks?"
+      }
+    ]
+  },
+  {
+    "audio_path": "2coffee.m4a",
+    "speaker_turns": [
+      {
+        "speaker": "1",
+        "text": "Hi there! I'd like to order a large cappuccino with oat milk, please."
+      },
+      {
+        "speaker": "2",
+        "text": "Of course! Would you like any flavoring syrups with that?"
+      },
+      {
+        "speaker": "1",
+        "text": "Yes, could I get vanilla syrup, but just one pump?"
+      },
+      {
+        "speaker": "2",
+        "text": "So think that would be 5.75 would you like your receipt? No I see, me that thank you, I'll pay with card."
       }
     ]
   },

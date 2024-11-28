@@ -1,0 +1,52 @@
+[
+  {
+    "audio_path": "1good.m4a",
+    "speaker_turns": [
+      {
+        "speaker": "1",
+        "text": "good"
+      },
+      {
+        "speaker": "2",
+        "text": "good"
+      },
+      {
+        "speaker": "1",
+        "text": "good"
+      },
+      {
+        "speaker": "2",
+        "text": "good"
+      },
+      {
+        "speaker": "1",
+        "text": "good"
+      }
+    ]
+  },
+  {
+    "audio_path": "2good.m4a",
+    "speaker_turns": [
+      {
+        "speaker": "1",
+        "text": "good"
+      },
+      {
+        "speaker": "2",
+        "text": "good"
+      },
+      {
+        "speaker": "1",
+        "text": "good"
+      },
+      {
+        "speaker": "2",
+        "text": "good"
+      },
+      {
+        "speaker": "1",
+        "text": "good"
+      }
+    ]
+  }
+]

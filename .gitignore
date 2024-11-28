@@ -167,3 +167,4 @@ cython_debug/
 .vscode
 wav_files_train
 wav_files_validate
+weights

@@ -1,0 +1,52 @@
+[
+  {
+    "audio_path": "1bye.m4a",
+    "speaker_turns": [
+      {
+        "speaker": "1",
+        "text": "bye"
+      },
+      {
+        "speaker": "2",
+        "text": "bye"
+      },
+      {
+        "speaker": "1",
+        "text": "bye"
+      },
+      {
+        "speaker": "2",
+        "text": "bye"
+      },
+      {
+        "speaker": "1",
+        "text": "bye"
+      }
+    ]
+  },
+  {
+    "audio_path": "2bye.m4a",
+    "speaker_turns": [
+      {
+        "speaker": "1",
+        "text": "bye"
+      },
+      {
+        "speaker": "2",
+        "text": "bye"
+      },
+      {
+        "speaker": "1",
+        "text": "bye"
+      },
+      {
+        "speaker": "2",
+        "text": "bye"
+      },
+      {
+        "speaker": "1",
+        "text": "bye"
+      }
+    ]
+  }
+]

@@ -44,5 +44,81 @@
         "text": "Yes, could I renew the mystery novel for another two weeks?"
       }
     ]
+  },
+  {
+    "audio_path": "3meeting_schedule.m4a",
+    "speaker_turns": [
+      {
+        "speaker": "1",
+        "text": "I need to resscedule our team meeting for next week"
+      },
+      {
+        "speaker": "2",
+        "text": "No problem. What day works better for you?"
+      },
+      {
+        "speaker": "1",
+        "text": "Could we move it to Wednesday afternoon instead of Tuesday?"
+      },
+      {
+        "speaker": "2",
+        "text": "Wednesday works for me. How about 2 PM? "
+      },
+      {
+        "speaker": "1",
+        "text": "Perfect, I'll send out a calendar update"
+      }
+    ]
+  },
+  {
+    "audio_path": "4restaurant.m4a",
+    "speaker_turns": [
+      {
+        "speaker": "1",
+        "text": "Good evening, I'd like to make a reservation for Friday night"
+      },
+      {
+        "speaker": "2",
+        "text": "I'd be happy to help. How many people will be dining?"
+      },
+      {
+        "speaker": "1",
+        "text": " There will be four of us, around 7:30 if possible."
+      },
+      {
+        "speaker": "2",
+        "text": "Let me check... Yes, we have a table available at 7:30."
+      },
+      {
+        "speaker": "1",
+        "text": "Wonderful, please put it under the name Johnson."
+      }
+    ]
+  },
+  {
+    "audio_path": "5tech_support.m4a",
+    "speaker_turns": [
+      {
+        "speaker": "1",
+        "text": "I'm having trouble connecting to the office WiFi network."
+      },
+      {
+        "speaker": "2",
+        "text": " Have you tried restarting your computer first?"
+      },
+      {
+        "speaker": "1",
+        "text": " Yes, I did that but it's still not working. "
+      },
+      {
+        "speaker": "2",
+        "text": "Okay, can you see the network in your WiFi list?"
+      },
+
+      {
+        "speaker": "1",
+        "text": "No, it's not showing up at all anymore."
+      }
+    ]
   }
 ]

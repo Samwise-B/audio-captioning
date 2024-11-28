@@ -51,7 +51,7 @@ print(
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 criterion = torch.nn.CrossEntropyLoss()
 
-val_freq = (ds.__len__() // batch_size) / 5
+val_freq = (ds.__len__() // batch_size) / 4
 num_epochs = 1000
 
 config = {
@@ -92,64 +92,64 @@ for epoch in range(num_epochs):
         running_accuracy.append(precision)
         # print(f"epoch: {epoch} loss: {loss.item()}, precision: {precision}", end="\r")
 
-    if (idx + 1) % val_freq == 0:
-        torch.save(
-            model.state_dict(),
-            model_dir / f"{model_name}.pt",
-        )
-        wandb.save(
-            str(model_dir / f"{model_name}.pt"),
-            base_path=str(model_dir),
-        )
-        logging.info("Running inference...")
-        o, t = run_inference(model, ds, 0, 100)
-        logging.info(f"Inference: \n{o}")
-        logging.info("=======================")
-        logging.info(f"Target: \n{t}")
+        if (idx + 1) % val_freq == 0:
+            torch.save(
+                model.state_dict(),
+                model_dir / f"{model_name}.pt",
+            )
+            wandb.save(
+                str(model_dir / f"{model_name}.pt"),
+                base_path=str(model_dir),
+            )
+            logging.info("Running inference...")
+            o, t = run_inference(model, ds, 0, 100)
+            logging.info(f"Inference: \n{o}")
+            logging.info("=======================")
+            logging.info(f"Target: \n{t}")
 
-        # clear training batch from memory
-        del audio, masks, cap_inpt, cap_targ, cap_lens, pred, cropped_pred, loss
-        torch.cuda.empty_cache()
+            # clear training batch from memory
+            del audio, masks, cap_inpt, cap_targ, cap_lens, pred, cropped_pred, loss
+            torch.cuda.empty_cache()
 
-        # validation loop
-        with torch.inference_mode():
-            val_loss = []
+            # validation loop
+            with torch.inference_mode():
+                val_loss = []
+                val_accuracy = []
+                for audio, masks, cap_inpt, cap_targ, cap_lens in tqdm(
+                    val_loader, desc="Validation"
+                ):
+                    audio, masks, cap_inpt, cap_targ = (
+                        audio.to(device),
+                        masks.to(device),
+                        cap_inpt.to(device),
+                        cap_targ.to(device),
+                    )
+
+                    out = model(audio, masks, cap_inpt)
+                    pred = out.logits
+                    cropped_pred = torch.cat(
+                        [x[: cap_lens[i]] for i, x in enumerate(pred)], dim=0
+                    ).to(device)
+
+                    loss = criterion(cropped_pred, cap_targ)
+
+                    precision = sum(
+                        torch.argmax(cropped_pred, dim=-1) == cap_targ
+                    ) / len(cap_targ)
+                    val_loss.append(loss.item())
+                    val_accuracy.append(precision)
+            wandb.log(
+                {
+                    "loss": sum(running_loss) / len(running_loss),
+                    "precision": sum(running_accuracy) / len(running_accuracy),
+                    "val_loss": sum(val_loss) / len(val_loss),
+                    "vali_precision": sum(val_accuracy) / len(val_accuracy),
+                }
+            )
+            running_accuracy = []
+            running_loss = []
             val_accuracy = []
-            for audio, masks, cap_inpt, cap_targ, cap_lens in tqdm(
-                val_loader, desc="Validation"
-            ):
-                audio, masks, cap_inpt, cap_targ = (
-                    audio.to(device),
-                    masks.to(device),
-                    cap_inpt.to(device),
-                    cap_targ.to(device),
-                )
-
-                out = model(audio, masks, cap_inpt)
-                pred = out.logits
-                cropped_pred = torch.cat(
-                    [x[: cap_lens[i]] for i, x in enumerate(pred)], dim=0
-                ).to(device)
-
-                loss = criterion(cropped_pred, cap_targ)
-
-                precision = sum(torch.argmax(cropped_pred, dim=-1) == cap_targ) / len(
-                    cap_targ
-                )
-                val_loss.append(loss.item())
-                val_accuracy.append(precision)
-        wandb.log(
-            {
-                "loss": sum(running_loss) / len(running_loss),
-                "precision": sum(running_accuracy) / len(running_accuracy),
-                "val_loss": sum(val_loss) / len(val_loss),
-                "vali_precision": sum(val_accuracy) / len(val_accuracy),
-            }
-        )
-        running_accuracy = []
-        running_loss = []
-        val_accuracy = []
-        val_loss = []
+            val_loss = []
 
 torch.save(
     model.state_dict(),

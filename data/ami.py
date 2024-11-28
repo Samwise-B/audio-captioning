@@ -1,5 +1,5 @@
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, Subset
 from transformers import WhisperTokenizer, WhisperFeatureExtractor
 from datasets import load_dataset
 from torch.nn.utils.rnn import pad_sequence
@@ -8,12 +8,22 @@ from torch.nn.utils.rnn import pad_sequence
 
 
 class Ami(Dataset):
-    def __init__(self, split: str, chunk_size: int = 30, max_speakers: int = 10):
+    def __init__(
+        self,
+        split: str,
+        subset_size: int = None,
+        chunk_size: int = 30,
+        max_speakers: int = 10,
+    ):
         self.split = split
         self.ds = load_dataset("edinburghcstr/ami", "ihm", trust_remote_code=True)
         self.ds = self.ds[split]
+        self.subset_size = subset_size
+        self.indices = list(range(subset_size))
+
         self.tk = WhisperTokenizer.from_pretrained("openai/whisper-base")
         self.extractor = WhisperFeatureExtractor()
+
         self.max_speakers = max_speakers
         self.speaker_labels = [f"<|speaker_{i}|>" for i in range(1, max_speakers + 1)]
         self.tk.add_tokens(self.speaker_labels, special_tokens=True)
@@ -21,15 +31,19 @@ class Ami(Dataset):
         self.speaker_labels = [
             self.tk_to_id(f"<|speaker_{i}|>") for i in range(1, max_speakers + 1)
         ]
-        self.max_chunk_size = 30 * 16000
+        self.max_chunk_size = chunk_size * 16000
 
     def __len__(self):
-        return len(self.ds)
+        if self.subset_size:
+            return len(self.ds.select(range(self.subset_size)))
+        else:
+            return len(self.ds)
 
     def __getitem__(self, idx):
         """
         Combine multiple rows of audio and speakers until clip is 30 seconds long
         """
+        # print("index:", idx)
         row = self.ds[idx]
         row_count = 1
         meeting_id = row["meeting_id"]
@@ -87,7 +101,7 @@ class Ami(Dataset):
                 f" {row["text"].lower()} ", add_special_tokens=False
             )
 
-        print(caption)
+        # print(caption)
         caption = torch.tensor(caption)
         preprocessed = self.extractor(
             audio, sampling_rate=16000, return_tensors="pt", return_attention_mask=True
@@ -97,17 +111,17 @@ class Ami(Dataset):
         cap_inpt = caption[:-1]
         cap_targ = caption[1:]
         # audio_features = audio_features[]
-        return audio_inpt, audio_mask, cap_inpt, cap_targ
+        return audio_inpt, audio_mask, cap_inpt, cap_targ, cap_targ.shape[-1]
 
     def collate_fn(batch):
-        audios, masks, cap_inpts, cap_targs = zip(*batch)
+        audios, masks, cap_inpts, cap_targs, cap_lens = zip(*batch)
 
         audio_batch = torch.cat(audios, dim=0)
         mask_batch = torch.cat(masks, dim=0)
         stacked_targs = torch.cat(cap_targs, dim=0)
         padded_cap_inpts = pad_sequence(cap_inpts, batch_first=True)
 
-        cap_lens = [len(t) for t in cap_targs]
+        # cap_lens = [len(t) for t in cap_targs]
 
         return audio_batch, mask_batch, padded_cap_inpts, stacked_targs, cap_lens
 

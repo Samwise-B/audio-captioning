@@ -8,7 +8,8 @@ import tempfile
 import json
 
 from data.utils import process_transcript_json
-
+from training.sam_r_train import collate_fn
+from training.utils import add_speaker_tokens_to_whisper
 class HomegrownDataset(Dataset):
     """
     PyTorch Dataset for speaker diarization training data with M4A support
@@ -18,7 +19,7 @@ class HomegrownDataset(Dataset):
                 sample_rate=16000,
                 duration=30,  # max duration in seconds
                 transform=None,
-                split='train'
+                split='train',
             ):
         """
         Args:
@@ -28,11 +29,11 @@ class HomegrownDataset(Dataset):
             transform (callable, optional): Optional transform to be applied on audio
         """
         if(split == 'train'):
-            audio_dir = "/Users/samuelrae/code/MLX/week7-audio-2/audio-captioning/wav_files_train"
-            self.transcript_filepath = 'training_data.json'
+            audio_dir = "/Users/samuelrae/code/MLX/week7-audio/audio-captioning/wav_files_train"
+            self.transcript_filepath = 'training_data/training_data.json'
         if(split == 'validate'):
-            audio_dir = "/Users/samuelrae/code/MLX/week7-audio-2/audio-captioning/wav_files_validate"
-            self.transcript_filepath = 'training_data_validation.json'
+            audio_dir = "/Users/samuelrae/code/MLX/week7-audio/audio-captioning/wav_files_validate"
+            self.transcript_filepath = 'training_data/training_data_validation.json'
         self.audio_dir = Path(audio_dir)
         self.sample_rate = sample_rate
         self.duration = duration
@@ -153,14 +154,12 @@ class HomegrownDataset(Dataset):
 
 # Example usage
 if __name__ == "__main__":
-    # Install required packages if not already installed
-    # pip install pydub torchaudio pandas numpy
-    
     # Create dataset
+
     dataset = HomegrownDataset(
         sample_rate=16000,
         duration=30,
-        split='train'
+        split='train',
     )
     
     # Create dataloader
@@ -168,7 +167,8 @@ if __name__ == "__main__":
         dataset,
         batch_size=2,
         shuffle=True,
-        num_workers=1
+        num_workers=1,
+        collate_fn=collate_fn
     )
     
     # Print dataset info

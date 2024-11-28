@@ -14,22 +14,18 @@ def get_start_input_ids(tokenizer):
 
     input_ids += [language_token_id]
 
-    transcribe_token = '<|transcribe|>'
-    transcribe_token_id = tokenizer.convert_tokens_to_ids(transcribe_token)
-    input_ids += [transcribe_token_id]
-
     no_timestamps_token = '<|notimestamps|>'
     no_timestamps_token_id = tokenizer.convert_tokens_to_ids(no_timestamps_token)
     input_ids += [no_timestamps_token_id]
     return input_ids
 
-def get_input_tensor(input_ids, device):
-    input_tkns = torch.tensor(input_ids).unsqueeze(0).to(device)
-    return input_tkns
+# def get_input_tensor(input_ids, device):
+#     input_tkns = torch.tensor(input_ids).unsqueeze(0).to(device)
+#     return input_tkns
 
 def get_target_input_ids(transcript, tokenizer):
     input_ids = get_start_input_ids(tokenizer)
-    input_ids += tokenizer.encode(transcript)
+    input_ids += tokenizer.encode(transcript, add_special_tokens=False)
     return input_ids
 
 def add_speaker_tokens_to_whisper(model_name="openai/whisper-tiny", speaker_labels=None):
@@ -38,7 +34,6 @@ def add_speaker_tokens_to_whisper(model_name="openai/whisper-tiny", speaker_labe
     """
     if speaker_labels is None:
         speaker_labels = [f"<|speaker_{i}|>" for i in range(1, 5)]
-    
     # Initialize components
     processor = WhisperProcessor.from_pretrained(model_name)
     model = WhisperForConditionalGeneration.from_pretrained(model_name)

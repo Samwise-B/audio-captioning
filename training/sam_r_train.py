@@ -70,7 +70,7 @@ def train(model, input_mel, input_tensor, target_tensor):
 
 
 
-for batch in dataloader:
+for i, batch in enumerate(dataloader):
     # squeeze to remove channel dimension
     audio = batch['audio'].squeeze(1)
     # TODO is there a transformers method for this?

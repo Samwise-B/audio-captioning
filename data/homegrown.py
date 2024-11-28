@@ -13,11 +13,13 @@ class HomegrownDataset(Dataset):
     """
     PyTorch Dataset for speaker diarization training data with M4A support
     """
-    def __init__(self, 
-                 audio_dir="/Users/samuelrae/code/MLX/week7-audio-2/audio-captioning/wav_files",
-                 sample_rate=16000,
-                 duration=30,  # max duration in seconds
-                 transform=None):
+    def __init__(
+                self, 
+                sample_rate=16000,
+                duration=30,  # max duration in seconds
+                transform=None,
+                split='train'
+            ):
         """
         Args:
             audio_dir (str): Directory with all the M4A files
@@ -25,6 +27,12 @@ class HomegrownDataset(Dataset):
             duration (int): Target duration in seconds (will pad/trim)
             transform (callable, optional): Optional transform to be applied on audio
         """
+        if(split == 'train'):
+            audio_dir = "/Users/samuelrae/code/MLX/week7-audio-2/audio-captioning/wav_files_train"
+            self.transcript_filepath = 'training_data.json'
+        if(split == 'validate'):
+            audio_dir = "/Users/samuelrae/code/MLX/week7-audio-2/audio-captioning/wav_files_validate"
+            self.transcript_filepath = 'training_data_validation.json'
         self.audio_dir = Path(audio_dir)
         self.sample_rate = sample_rate
         self.duration = duration
@@ -32,6 +40,7 @@ class HomegrownDataset(Dataset):
         
         # Get all m4a files and create metadata DataFrame
         self.files = list(self.audio_dir.glob('*.m4a'))
+        print(f"length:{len(self.files)}")
         self.metadata = self._create_metadata()
         
         # Create resampler if needed
@@ -102,7 +111,7 @@ class HomegrownDataset(Dataset):
         return audio
     
     def _get_transcript_w_speaker_annotations(self, filename):
-        with open('training_data.json', 'r') as f:
+        with open(self.transcript_filepath, 'r') as f:
             data = json.load(f)
             processed_data = process_transcript_json(data, filename)
         return processed_data
@@ -147,13 +156,11 @@ if __name__ == "__main__":
     # Install required packages if not already installed
     # pip install pydub torchaudio pandas numpy
     
-    AUDIO_DIR = "/Users/samuelrae/code/MLX/week7-audio/diarisation/wav_files"
-    
     # Create dataset
     dataset = HomegrownDataset(
-        audio_dir=AUDIO_DIR,
         sample_rate=16000,
-        duration=30
+        duration=30,
+        split='train'
     )
     
     # Create dataloader

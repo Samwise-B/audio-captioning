@@ -1,0 +1,27 @@
+[
+  {
+    "audio_path": "6weather.m4a",
+    "speaker_turns": [
+      {
+        "speaker": "1",
+        "text": "Have you seen the forecast for this weekend?"
+      },
+      {
+        "speaker": "2",
+        "text": "Yes, they're saying it might snow on Saturday."
+      },
+      {
+        "speaker": "1",
+        "text": "Really? I was planning to go hiking then. "
+      },
+      {
+        "speaker": "2",
+        "text": "You might want to reschedule. They're predicting several inches."
+      },
+      {
+        "speaker": "1",
+        "text": "Thanks for letting me know. I'll make other plans."
+      }
+    ]
+  }
+]

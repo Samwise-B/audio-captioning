@@ -7,28 +7,29 @@ from transformers import (
 )
 
 
-class Whisper(nn.Module):
-    def __init__(self, max_speakers: int = 10):
+class CustomWhisper(nn.Module):
+    def __init__(self, max_speakers: int = 10, base_model="openai/whisper-base"):
         super().__init__()
 
-        self.processor = WhisperProcessor.from_pretrained("openai/whisper-base")
-        self.whisper = WhisperForConditionalGeneration.from_pretrained(
-            "openai/whisper-base"
+        self.processor = WhisperProcessor.from_pretrained(base_model)
+        self.model = WhisperForConditionalGeneration.from_pretrained(
+           base_model
         )
         self.new_tokens = {
             "additional_special_tokens": [
                 f"<|speaker_{i+1}|>" for i in range(max_speakers)
             ]
         }
-        self.tokeniser = WhisperTokenizer.from_pretrained("openai/whisper-base")
-        self.tokeniser.add_special_tokens(self.new_tokens)
-        self.whisper.resize_token_embeddings(len(self.tokeniser))
+        self.tokenizer = WhisperTokenizer.from_pretrained(base_model)
+        self.tokenizer.add_special_tokens(self.new_tokens)
+        self.model.resize_token_embeddings(len(self.tokenizer))
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def forward(self, audio, mask, captions):
-        pred = self.whisper(audio, mask, captions)
+        pred = self.model(audio, mask, captions)
         return pred
 
 
 if __name__ == "__main__":
-    model = Whisper()
+    model = CustomWhisper()
     pass

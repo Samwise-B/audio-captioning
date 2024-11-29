@@ -2,6 +2,7 @@ py-39
 wandb
 ssh-key
 weights
+minio
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -31,25 +31,26 @@ services:
     container_name: backend
     volumes:
       - ./backend:/app
+      - ./models:/app/models
+      - ./weights:/app/weights
     expose:
       - "8000" # Expose the internal port for communication with NGINX
     networks:
       - app_network
 
   minio:
-    build:
-      context: ./minio
+    image: minio/minio
     container_name: minio
     environment:
       - MINIO_ROOT_USER=$MINIO_ROOT_USER
       - MINIO_ROOT_PASSWORD=$MINIO_PASSWORD
     volumes:
-      - ./weights:/app/weights
-    expose:
+      - ./minio:/data
+    ports:
       - "9000:9000"
       - "9001:9001"
-    networks:
-      - app_network
+    command: minio server /data --console-address ":9001"
+    restart: unless-stopped
 
 networks:
   app_network:

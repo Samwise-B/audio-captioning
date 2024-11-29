@@ -71,6 +71,8 @@ class Ami(Dataset):
             # print(speaker_count)
             # print(audio.shape)
             # print(caption)
+            if idx + row_count >= self.__len__():
+                break
 
             row = self.ds[idx + row_count]
             row_count += 1

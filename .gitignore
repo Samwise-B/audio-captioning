@@ -1,4 +1,7 @@
 py-39
+wandb
+ssh-key
+weights
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

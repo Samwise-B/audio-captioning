@@ -171,3 +171,5 @@ cython_debug/
 wav_files_train
 wav_files_validate
 weights
+
+minio_data

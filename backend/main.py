@@ -2,10 +2,18 @@ import torch
 import whisper
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
+from init_minio import init_minio
 from utils.preprocess import clean_prediction
 
 # from utils.chunk_audio import split_audio
 import tempfile
+
+print("about to connect")
+minio_client = init_minio()
+buckets = minio_client.list_buckets()
+for bucket in buckets:
+    print(f"Bucket: {bucket.name}, Created: {bucket.creation_date}")
+
 
 app = FastAPI()
 model = whisper.load_model("tiny")

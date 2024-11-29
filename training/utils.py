@@ -34,7 +34,8 @@ def collate_fn(batch):
     return {
         'audio': padded_audio,
         'input_ids': tokenized.input_ids,
-        'attention_mask': tokenized.attention_mask
+        'attention_mask': tokenized.attention_mask,
+        'texts': texts
     }
 
 def get_target_input_ids(transcript, tokenizer):
@@ -76,7 +77,7 @@ def add_speaker_tokens_to_whisper(model_name="openai/whisper-tiny", speaker_labe
 
 
 def clean_prediction(decoded_text):
-    special_tokens = ["<|en|>", "<|transcribe|>", "<|notimestamps|>", "<|endoftext|>"]
+    special_tokens = ["<|startoftranscript|>", "<|en|>", "<|transcribe|>", "<|notimestamps|>", "<|endoftext|>"]
     for token in special_tokens:
         decoded_text = decoded_text.replace(token, "").strip()
     return decoded_text

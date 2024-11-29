@@ -14,19 +14,6 @@ notimestamps_token_id = tokenizer.convert_tokens_to_ids('<|notimestamps|>')
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 criterion = torch.nn.CrossEntropyLoss()
 
-def validate_batch(model, audio):
-    model.eval()
-    batch_size = audio.shape[0]
-    predictions = []
-    for batch_idx in range(batch_size):
-        audio_i = audio[batch_idx:batch_idx+1]
-        prediction = validate(model, audio_i)
-        predictions.append(prediction)
-    print("===================")
-    for idx, pred in enumerate(predictions):
-        print(f"Batch item {idx} Prediction:", pred)
-    print("===================")
-
 def validate(model, input_mel):
     model.eval()
     with torch.no_grad():
@@ -44,6 +31,21 @@ def validate(model, input_mel):
 
     decoded_initial_output = tokenizer.decode(input_tkns_tensor.squeeze().tolist())
     return decoded_initial_output
+
+def validate_batch(model, audio, targets):
+    model.eval()
+    batch_size = audio.shape[0]
+    for batch_idx in range(batch_size):
+        audio_i = audio[batch_idx:batch_idx+1]
+        target = targets[batch_idx:batch_idx+1]
+        prediction = validate(model, audio_i)
+        print("===================")
+        print(f"Batch item {batch_idx}\n")
+        print(f"Target:\n")
+        print(target)
+        print(f"\nPrediction:\n")
+        print(prediction)
+        print("===================")
 
 def train(model, input_mel, input_tensor, target_tensor, mask):
     model.train()
@@ -81,14 +83,15 @@ def main():
 
     for i, batch in enumerate(dataloader):
         audio = batch['audio']
+        targets = batch['texts']
 
-        # shifting for teacher forcing
+        # shift for teacher forcing
         input_ids = batch['input_ids'][:, :-1].contiguous()
         attention_mask = batch['attention_mask'][:, :-1].contiguous()
         target_ids = batch['input_ids'][:, 1:].clone().contiguous()
 
         train(model, audio, input_ids, target_ids, attention_mask)
-        validate_batch(model, audio)
+        validate_batch(model, audio, targets)
     torch.save(model.state_dict(), "./weights/whisper_diarization_weights.pth")
 
 if __name__ == "__main__":

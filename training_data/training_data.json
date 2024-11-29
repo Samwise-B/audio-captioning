@@ -120,5 +120,230 @@
         "text": "No, it's not showing up at all anymore."
       }
     ]
+  },
+  {
+    "audio_path": "6doctor.m4a",
+    "speaker_turns": [
+      {
+        "speaker": "1",
+        "text": "I'd like to schedule a follow-up appointment for my blood test results"
+      },
+      {
+        "speaker": "2",
+        "text": "When was your last visit with Dr. Miller?"
+      },
+      {
+        "speaker": "1",
+        "text": "Two weeks ago, on the 14th"
+      },
+      {
+        "speaker": "2",
+        "text": "She has an opening next Tuesday at 10 AM or Thursday at 2 PM"
+      },
+      {
+        "speaker": "1",
+        "text": "Tuesday at 10 would be perfect"
+      }
+    ]
+  },
+  {
+    "audio_path": "7doctor.m4a",
+    "speaker_turns": [
+      {
+        "speaker": "1",
+        "text": "I'd like to schedule a follow-up appointment for my blood test results"
+      },
+      {
+        "speaker": "2",
+        "text": "When was your last visit with Dr. Miller?"
+      },
+      {
+        "speaker": "1",
+        "text": "Two weeks ago, on the 14th"
+      },
+      {
+        "speaker": "2",
+        "text": "She has an opening next Tuesday at 10 AM or Thursday at 2 PM"
+      },
+      {
+        "speaker": "1",
+        "text": "Tuesday at 10 would be perfect"
+      }
+    ]
+  },
+  {
+    "audio_path": "8gym_l.m4a",
+    "speaker_turns": [
+      {
+        "speaker": "1",
+        "text": "I'm interested in joining your gym. What membership options do you have?"
+      },
+      {
+        "speaker": "2",
+        "text": "We offer monthly plans starting at $39.99 or annual memberships at $399"
+      },
+      {
+        "speaker": "1",
+        "text": "Does the monthly plan include fitness classes?"
+      },
+      {
+        "speaker": "2",
+        "text": "Basic classes are included, but specialty classes have an extra fee"
+      },
+      {
+        "speaker": "1",
+        "text": "I'll take the monthly plan then"
+      }
+    ]
+  },
+  {
+    "audio_path": "9gym.m4a",
+    "speaker_turns": [
+      {
+        "speaker": "1",
+        "text": "I'm interested in joining your gym. What membership options do you have?"
+      },
+      {
+        "speaker": "2",
+        "text": "We offer monthly plans starting at $39.99 or annual memberships at $399"
+      },
+      {
+        "speaker": "1",
+        "text": "Does the monthly plan include fitness classes?"
+      },
+      {
+        "speaker": "2",
+        "text": "Basic classes are included, but specialty classes have an extra fee"
+      },
+      {
+        "speaker": "1",
+        "text": "I'll take the monthly plan then"
+      }
+    ]
+  },
+  {
+    "audio_path": "10hotel_j.m4a",
+    "speaker_turns": [
+      {
+        "speaker": "1",
+        "text": "I need to modify my hotel reservation for next month"
+      },
+      {
+        "speaker": "2",
+        "text": "I'll help you with that. What's your confirmation number?"
+      },
+      {
+        "speaker": "1",
+        "text": "It's HB452891"
+      },
+      {
+        "speaker": "2",
+        "text": "I see your booking for March 15th. What changes would you like to make?"
+      },
+      {
+        "speaker": "1",
+        "text": "Can I extend it for one more night?"
+      }
+    ]
+  },
+  {
+    "audio_path": "11hotel.m4a",
+    "speaker_turns": [
+      {
+        "speaker": "1",
+        "text": "I need to modify my hotel reservation for next month"
+      },
+      {
+        "speaker": "2",
+        "text": "I'll help you with that. What's your confirmation number?"
+      },
+      {
+        "speaker": "1",
+        "text": "It's HB452891"
+      },
+      {
+        "speaker": "2",
+        "text": "I see your booking for March 15th. What changes would you like to make?"
+      },
+      {
+        "speaker": "1",
+        "text": "Can I extend it for one more night?"
+      }
+    ]
+  },
+  {
+    "audio_path": "12pet_grooming.m4a",
+    "speaker_turns": [
+      {
+        "speaker": "1",
+        "text": "I'd like to book a grooming appointment for my golden retriever"
+      },
+      {
+        "speaker": "2",
+        "text": "We have openings this Saturday morning. Has your dog been here before?"
+      },
+      {
+        "speaker": "1",
+        "text": "No, this would be his first time"
+      },
+      {
+        "speaker": "2",
+        "text": "The full grooming package for large dogs is $85. Would you like 9 AM or 11 AM?"
+      },
+      {
+        "speaker": "1",
+        "text": "9 AM works better for me"
+      }
+    ]
+  },
+  {
+    "audio_path": "13pet_j.m4a",
+    "speaker_turns": [
+      {
+        "speaker": "1",
+        "text": "I'd like to book a grooming appointment for my golden retriever"
+      },
+      {
+        "speaker": "2",
+        "text": "We have openings this Saturday morning. Has your dog been here before?"
+      },
+      {
+        "speaker": "1",
+        "text": "No, this would be his first time"
+      },
+      {
+        "speaker": "2",
+        "text": "The full grooming package for large dogs is $85. Would you like 9 AM or 11 AM?"
+      },
+      {
+        "speaker": "1",
+        "text": "9 AM works better for me"
+      }
+    ]
+  },
+  {
+    "audio_path": "14pet.m4a",
+    "speaker_turns": [
+      {
+        "speaker": "1",
+        "text": "I'd like to book a grooming appointment for my golden retriever"
+      },
+      {
+        "speaker": "2",
+        "text": "We have openings this Saturday morning. Has your dog been here before?"
+      },
+      {
+        "speaker": "1",
+        "text": "No, this would be his first time"
+      },
+      {
+        "speaker": "2",
+        "text": "The full grooming package for large dogs is $85. Would you like 9 AM or 11 AM?"
+      },
+      {
+        "speaker": "1",
+        "text": "9 AM works better for me"
+      }
+    ]
   }
 ]

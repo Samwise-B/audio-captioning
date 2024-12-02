@@ -3,11 +3,10 @@ from torch.utils.data import DataLoader
 
 from data.homegrown import HomegrownDataset
 from models.whisper import CustomWhisper
-from training.utils import collate_fn, get_start_input_ids
+from training.utils import clean_prediction, collate_fn, get_start_input_ids
 
 from backend.minio_client import MinioClientWrapper
 
-minio = MinioClientWrapper()
 
 custom_model_wrapper = CustomWhisper(base_model="openai/whisper-tiny", max_speakers=5)
 tokenizer = custom_model_wrapper.tokenizer
@@ -48,7 +47,7 @@ def validate_batch(model, audio, targets):
         print(f"Target:\n")
         print(target)
         print(f"\nPrediction:\n")
-        print(prediction)
+        print(clean_prediction(prediction))
         print("===================")
 
 def train(model, input_mel, input_tensor, target_tensor, mask):
@@ -82,6 +81,7 @@ def train(model, input_mel, input_tensor, target_tensor, mask):
         print(f"Step {step}, Loss: {loss.item()}")
 
 def main():
+    minio = MinioClientWrapper()
     dataset = HomegrownDataset(split='train')
     dataloader = DataLoader(dataset, batch_size=2, collate_fn=collate_fn)
 

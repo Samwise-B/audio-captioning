@@ -2,7 +2,9 @@ import streamlit as st
 import requests
 
 # URL of the FastAPI backend
-API_URL = "http://backend:8000/generate-subtitle/"
+BASE_URL = "http://backend:8000/"
+API_URL_DEFAULT = BASE_URL + "generate-subtitle/"
+API_URL_DIARIZE = BASE_URL + "diarize/"
 
 st.title("Audio Captioning & Translation")
 st.write("Upload an audio file and get its subtitles or translate it into english.")
@@ -33,7 +35,7 @@ if right.button("Upload"):
     # Send the file to the backend
     with st.spinner("Generating subtitle..."):
         response = requests.post(
-            API_URL,
+            API_URL_DIARIZE,
             data={"task": option},
             files={"audio_file": uploaded_file.getvalue()},
         )

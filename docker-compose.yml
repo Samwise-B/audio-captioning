@@ -29,27 +29,12 @@ services:
     container_name: backend
     volumes:
       - ./backend:/app
+      - ./models:/app/models:ro # Fixed the formatting here
     expose:
       - "8000" # Expose the internal port for communication with NGINX
     networks:
       - app_network
 
-  # minio:
-  #   image: minio/minio:latest
-  #   ports:
-  #     - "9000:9000" # API port
-  #     - "9001:9001" # Console port
-  #   environment:
-  #     MINIO_ROOT_USER: minioadmin # Change these credentials
-  #     MINIO_ROOT_PASSWORD: minioadmin # in production!
-  #   command: server --console-address ":9001" /data
-  #   volumes:
-  #     - ./minio_data:/data # Persist data on host machine
-  #   healthcheck:
-  #     test: ["CMD", "mc", "ready", "local"]
-  #     interval: 5s
-  #     timeout: 5s
-  #     retries: 5
   minio:
     image: minio/minio:latest
     ports:

@@ -9,7 +9,6 @@ from models.whisper import CustomWhisper
 from utils.preprocess import clean_prediction
 from transformers import WhisperForConditionalGeneration
 
-# from utils.chunk_audio import split_audio
 import tempfile
 
 print("about to connect")
@@ -19,10 +18,11 @@ for bucket in buckets:
     print(f"Bucket: {bucket.name}, Created: {bucket.creation_date}")
 
 diarization_model = CustomWhisper(base_model="openai/whisper-tiny", max_speakers=5)
-weights_data = minio.load_weights("whisper_diarization", "v2")
+weights_data = minio.load_weights("whisper_diarization", "v3")
 if weights_data:
     state_dict = torch.load(weights_data)
-    diarization_model.load_state_dict(state_dict)
+
+    diarization_model.model.load_state_dict(state_dict)
 
     # Print total number of parameters
     total_params = sum(p.numel() for p in diarization_model.parameters())
@@ -139,7 +139,7 @@ async def process_audio(audio_file: UploadFile = File(...), task: str = Form(...
         # transcription = processor.batch_decode(generated_ids, skip_special_tokens=False)[0]
         
 
-        transcription = validate(diarization_model.model, inputs, diarization_model.tokenizer)
+        transcription = validate(diarization_model.model, inputs['input_features'], diarization_model.tokenizer)
         print(f"transcription {transcription}")
         
         return JSONResponse(content={"subtitle": transcription})

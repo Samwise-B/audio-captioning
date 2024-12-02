@@ -2,10 +2,16 @@ import torch
 from torch.utils.data import DataLoader
 
 from data.homegrown import HomegrownDataset
-from training.utils import add_speaker_tokens_to_whisper, collate_fn, get_start_input_ids
+from models.whisper import CustomWhisper
+from training.utils import collate_fn, get_start_input_ids
 
-processor, model = add_speaker_tokens_to_whisper()
-tokenizer = processor.tokenizer
+from backend.minio_client import MinioClientWrapper
+
+minio = MinioClientWrapper()
+
+custom_model_wrapper = CustomWhisper(base_model="openai/whisper-tiny", max_speakers=5)
+tokenizer = custom_model_wrapper.tokenizer
+model = custom_model_wrapper.model
 
 eot_token = '<|endoftranscript|>'
 eot_token_id = tokenizer.convert_tokens_to_ids(eot_token)
@@ -17,13 +23,11 @@ criterion = torch.nn.CrossEntropyLoss()
 def validate(model, input_mel):
     model.eval()
     with torch.no_grad():
-        #  TODO replace with something better
         input_ids = get_start_input_ids(tokenizer)
         input_tkns_tensor = torch.tensor(input_ids).unsqueeze(0).to(model.device)
 
         for i in range(80):
-            initial_predictions = model(decoder_input_ids=input_tkns_tensor, input_features=input_mel)
-            # 
+            initial_predictions = model(input_mel, None, input_tkns_tensor)
             next_tkn = torch.argmax(initial_predictions.logits, dim=-1)[0,-1].unsqueeze(0)
             input_tkns_tensor = torch.cat((input_tkns_tensor.squeeze(), next_tkn), dim=0).unsqueeze(0)
             if input_tkns_tensor[-1, -1].item() == eot_token_id:
@@ -58,9 +62,9 @@ def train(model, input_mel, input_tensor, target_tensor, mask):
         optimizer.zero_grad()
         
         outputs = model(
-            decoder_input_ids=input_tensor, 
-            input_features=input_mel,
-            decoder_attention_mask=mask
+            input_mel,
+            mask,
+            input_tensor, 
         )
         
         # TODO shift predictions here rather than before
@@ -92,7 +96,9 @@ def main():
 
         train(model, audio, input_ids, target_ids, attention_mask)
         validate_batch(model, audio, targets)
-    torch.save(model.state_dict(), "./weights/whisper_diarization_weights.pth")
+    local_weights_path = "./weights/whisper_diarization_v3.pth"
+    torch.save(model.state_dict(), "./weights/whisper_diarization_v3.pth")
+    minio.save_weights(local_weights_path, "whisper_diarization", "v3")
 
 if __name__ == "__main__":
     main()

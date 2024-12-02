@@ -8,7 +8,7 @@ from transformers import (
 
 
 class CustomWhisper(nn.Module):
-    def __init__(self, max_speakers: int = 10, base_model="openai/whisper-base"):
+    def __init__(self, max_speakers: int = 10, base_model="openai/whisper-tiny"):
         super().__init__()
 
         self.processor = WhisperProcessor.from_pretrained(base_model)

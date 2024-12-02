@@ -5,7 +5,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def run_inference(model, ds, i: int, max_len: int):
-    tokeniser = ds.tk
+    tokenizer = ds.tk
     tk_to_id = ds.tk_to_id
 
     with torch.inference_mode():
@@ -27,6 +27,6 @@ def run_inference(model, ds, i: int, max_len: int):
             next_token = torch.argmax(new_logit, dim=-1)
             inpt = torch.cat([inpt, next_token.unsqueeze(0)], dim=-1)
 
-        return tokeniser.decode(
+        return tokenizer.decode(
             inpt.squeeze(), skip_special_tokens=False
-        ), tokeniser.decode(cap_targ, skip_special_tokens=False)
+        ), tokenizer.decode(cap_targ, skip_special_tokens=False)

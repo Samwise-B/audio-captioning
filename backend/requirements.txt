@@ -11,3 +11,4 @@ soundfile
 librosa
 pydub
 minio
+transformers

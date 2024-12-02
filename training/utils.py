@@ -2,6 +2,8 @@ import torch
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
 import whisper
 
+from models.whisper import CustomWhisper
+
 def get_start_input_ids(tokenizer):
     input_ids = []
 
@@ -27,8 +29,8 @@ def collate_fn(batch):
     
     # Handle text padding using HF
     texts = [item['transcript'] for item in batch]
-    processor, _ = add_speaker_tokens_to_whisper()
-    tokenizer = processor.tokenizer
+    custom_whisper = CustomWhisper(base_model="openai/whisper-tiny", max_speakers=5)
+    tokenizer = custom_whisper.tokenizer
     tokenized = tokenizer(texts, padding=True, return_tensors="pt")
     
     return {
@@ -42,39 +44,6 @@ def get_target_input_ids(transcript, tokenizer):
     input_ids = get_start_input_ids(tokenizer)
     input_ids += tokenizer.encode(transcript, add_special_tokens=False)
     return input_ids
-
-def add_speaker_tokens_to_whisper(model_name="openai/whisper-tiny", speaker_labels=None):
-    """
-    Add custom speaker tokens to a Whisper model's tokenizer and processor
-    """
-    if speaker_labels is None:
-        speaker_labels = [f"<|speaker_{i}|>" for i in range(1, 5)]
-    # Initialize components
-    processor = WhisperProcessor.from_pretrained(model_name)
-    model = WhisperForConditionalGeneration.from_pretrained(model_name)
-    
-    # Get the current vocab size
-    original_vocab_size = len(processor.tokenizer)
-    
-    # Add new tokens to both the processor's tokenizer and the decoder
-    num_added_tokens = processor.tokenizer.add_tokens(speaker_labels, special_tokens=True)
-    processor.feature_extractor.tokenizer = processor.tokenizer  # Ensure feature_extractor uses updated tokenizer
-    
-    if num_added_tokens > 0:
-        # Resize the token embeddings matrix of the model
-        model.resize_token_embeddings(len(processor.tokenizer))
-        
-        # Initialize the new embeddings
-        with torch.no_grad():
-            existing_embeddings = model.get_input_embeddings().weight[:original_vocab_size]
-            mean_embedding = torch.mean(existing_embeddings, dim=0)
-            
-            for i in range(num_added_tokens):
-                new_token_idx = original_vocab_size + i
-                model.get_input_embeddings().weight[new_token_idx] = mean_embedding.clone()
-    
-    return processor, model
-
 
 def clean_prediction(decoded_text):
     special_tokens = ["<|startoftranscript|>", "<|en|>", "<|transcribe|>", "<|notimestamps|>", "<|endoftext|>"]

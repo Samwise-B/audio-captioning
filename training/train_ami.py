@@ -11,7 +11,7 @@ repo_dir = Path(__file__).parent.parent
 sys.path.append(str(repo_dir))
 
 from data.ami import Ami
-from models.whisper import Whisper
+from models.whisper import CustomWhisper
 from utils.inference import run_inference
 
 model_dir = Path(__file__).parent.parent / "weights"
@@ -40,7 +40,7 @@ val_loader = DataLoader(val_ds, batch_size=batch_size, collate_fn=Ami.collate_fn
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-model = Whisper()
+model = CustomWhisper()
 model.to(device)
 model_name = "whisper-diarization-full"
 

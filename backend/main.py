@@ -1,9 +1,9 @@
 import os
 import librosa
-import torch
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
 from minio_client import MinioClientWrapper
+from models.utils import validate
 from models.whisper import CustomWhisper
 
 import tempfile
@@ -19,44 +19,6 @@ weights_data = minio.load_weights("whisper_diarization", "v3")
 
 app = FastAPI()
 max_cap = 200
-
-def get_start_input_ids(tokenizer):
-    input_ids = []
-
-    sot_token = '<|startoftranscript|>'
-    sot_token_id = tokenizer.convert_tokens_to_ids(sot_token)
-
-    input_ids += [sot_token_id]
-
-    language_token = '<|en|>'
-    language_token_id = tokenizer.convert_tokens_to_ids(language_token)
-
-    input_ids += [language_token_id]
-
-    no_timestamps_token = '<|notimestamps|>'
-    no_timestamps_token_id = tokenizer.convert_tokens_to_ids(no_timestamps_token)
-    input_ids += [no_timestamps_token_id]
-    return input_ids
-
-eot_token = '<|endoftranscript|>'
-
-def validate(model, input_mel, tokenizer):
-    eot_token_id = tokenizer.convert_tokens_to_ids(eot_token)
-    model.eval()
-    with torch.no_grad():
-        input_ids = get_start_input_ids(tokenizer)
-        input_tkns_tensor = torch.tensor(input_ids).unsqueeze(0).to(model.device)
-
-        for i in range(80):
-            initial_predictions = model(decoder_input_ids=input_tkns_tensor, input_features=input_mel)
-            # 
-            next_tkn = torch.argmax(initial_predictions.logits, dim=-1)[0,-1].unsqueeze(0)
-            input_tkns_tensor = torch.cat((input_tkns_tensor.squeeze(), next_tkn), dim=0).unsqueeze(0)
-            if input_tkns_tensor[-1, -1].item() == eot_token_id:
-                break
-
-    decoded_initial_output = tokenizer.decode(input_tkns_tensor.squeeze().tolist())
-    return decoded_initial_output
 
 #  TODO use transformers package instead for this
 # model = whisper.load_model("tiny")
@@ -90,7 +52,6 @@ async def process_audio(audio_file: UploadFile = File(...), task: str = Form(...
             status_code=400, detail="Must choose a valid task (transcribe/translate)"
         )
 
-    # save audio file temporarily
     with tempfile.NamedTemporaryFile(delete=False) as temp_file:
         temp_file.write(await audio_file.read())
         temp_file_path = temp_file.name
@@ -109,7 +70,6 @@ async def process_audio(audio_file: UploadFile = File(...), task: str = Form(...
         
         # # Decode the generated ids
         # transcription = processor.batch_decode(generated_ids, skip_special_tokens=False)[0]
-        
 
         transcription = validate(diarization_model.model, inputs['input_features'], diarization_model.tokenizer)
         print(f"transcription {transcription}")

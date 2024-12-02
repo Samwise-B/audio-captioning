@@ -2,55 +2,15 @@ import torch
 from torch.utils.data import DataLoader
 
 from data.homegrown import HomegrownDataset
+from models.utils import validate_batch
 from models.whisper import CustomWhisper
-from training.utils import clean_prediction, collate_fn, get_start_input_ids
+from training.utils import collate_fn
 
 from backend.minio_client import MinioClientWrapper
 
-
-custom_model_wrapper = CustomWhisper(base_model="openai/whisper-tiny", max_speakers=5)
-tokenizer = custom_model_wrapper.tokenizer
-model = custom_model_wrapper.model
-
-eot_token = '<|endoftranscript|>'
-eot_token_id = tokenizer.convert_tokens_to_ids(eot_token)
-notimestamps_token_id = tokenizer.convert_tokens_to_ids('<|notimestamps|>')
-
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
-criterion = torch.nn.CrossEntropyLoss()
-
-def validate(model, input_mel):
-    model.eval()
-    with torch.no_grad():
-        input_ids = get_start_input_ids(tokenizer)
-        input_tkns_tensor = torch.tensor(input_ids).unsqueeze(0).to(model.device)
-
-        for i in range(80):
-            initial_predictions = model(input_mel, None, input_tkns_tensor)
-            next_tkn = torch.argmax(initial_predictions.logits, dim=-1)[0,-1].unsqueeze(0)
-            input_tkns_tensor = torch.cat((input_tkns_tensor.squeeze(), next_tkn), dim=0).unsqueeze(0)
-            if input_tkns_tensor[-1, -1].item() == eot_token_id:
-                break
-
-    decoded_initial_output = tokenizer.decode(input_tkns_tensor.squeeze().tolist())
-    return decoded_initial_output
-
-def validate_batch(model, audio, targets):
-    model.eval()
-    batch_size = audio.shape[0]
-    for batch_idx in range(batch_size):
-        audio_i = audio[batch_idx:batch_idx+1]
-        target = targets[batch_idx:batch_idx+1]
-        prediction = validate(model, audio_i)
-        print("===================")
-        print(f"Batch item {batch_idx}\n")
-        print(f"Target:\n")
-        print(target)
-        print(f"\nPrediction:\n")
-        print(clean_prediction(prediction))
-        print("===================")
-
 def train(model, input_mel, input_tensor, target_tensor, mask):
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+    criterion = torch.nn.CrossEntropyLoss()
     model.train()
     total_loss = 0
     for name,param in model.named_parameters():
@@ -81,6 +41,10 @@ def train(model, input_mel, input_tensor, target_tensor, mask):
         print(f"Step {step}, Loss: {loss.item()}")
 
 def main():
+    custom_model_wrapper = CustomWhisper(base_model="openai/whisper-tiny", max_speakers=5)
+    tokenizer = custom_model_wrapper.tokenizer
+    model = custom_model_wrapper.model
+
     minio = MinioClientWrapper()
     dataset = HomegrownDataset(split='train')
     dataloader = DataLoader(dataset, batch_size=2, collate_fn=collate_fn)
@@ -95,7 +59,7 @@ def main():
         target_ids = batch['input_ids'][:, 1:].clone().contiguous()
 
         train(model, audio, input_ids, target_ids, attention_mask)
-        validate_batch(model, audio, targets)
+        validate_batch(model, audio, targets, tokenizer)
     local_weights_path = "./weights/whisper_diarization_v3.pth"
     torch.save(model.state_dict(), "./weights/whisper_diarization_v3.pth")
     minio.save_weights(local_weights_path, "whisper_diarization", "v3")

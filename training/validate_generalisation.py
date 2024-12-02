@@ -17,7 +17,7 @@ def main():
     dataloader = DataLoader(dataset, batch_size=2, collate_fn=collate_fn)
     for batch in dataloader:
         audio = batch['audio']
-        validate_batch(model, audio, batch['texts'])
+        validate_batch(model, audio, batch['texts'], custom_model_wrapper.tokenizer)
 
 if __name__ == "__main__":
     main()

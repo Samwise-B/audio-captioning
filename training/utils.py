@@ -1,26 +1,7 @@
 import torch
-from transformers import WhisperProcessor, WhisperForConditionalGeneration
 import whisper
 
 from models.whisper import CustomWhisper
-
-def get_start_input_ids(tokenizer):
-    input_ids = []
-
-    sot_token = '<|startoftranscript|>'
-    sot_token_id = tokenizer.convert_tokens_to_ids(sot_token)
-
-    input_ids += [sot_token_id]
-
-    language_token = '<|en|>'
-    language_token_id = tokenizer.convert_tokens_to_ids(language_token)
-
-    input_ids += [language_token_id]
-
-    no_timestamps_token = '<|notimestamps|>'
-    no_timestamps_token_id = tokenizer.convert_tokens_to_ids(no_timestamps_token)
-    input_ids += [no_timestamps_token_id]
-    return input_ids
 
 def collate_fn(batch):
     # Handle audio padding
@@ -39,11 +20,6 @@ def collate_fn(batch):
         'attention_mask': tokenized.attention_mask,
         'texts': texts
     }
-
-def get_target_input_ids(transcript, tokenizer):
-    input_ids = get_start_input_ids(tokenizer)
-    input_ids += tokenizer.encode(transcript, add_special_tokens=False)
-    return input_ids
 
 def clean_prediction(decoded_text):
     special_tokens = ["<|startoftranscript|>", "<|en|>", "<|transcribe|>", "<|notimestamps|>", "<|endoftext|>"]

@@ -25,77 +25,152 @@
     ]
   },
   {
-    "audio_path": "2doctor.m4a",
+    "audio_path": "2banking_j.m4a",
     "speaker_turns": [
       {
         "speaker": "1",
-        "text": "I'd like to schedule a follow-up appointment for my blood test results"
+        "text": "I noticed an unauthorized transaction on my credit card"
       },
       {
         "speaker": "2",
-        "text": "When was your last visit with Dr. Miller?"
+        "text": "I'll help you with that. Can you verify the last four digits of your card?"
       },
       {
         "speaker": "1",
-        "text": "Two weeks ago, on the 14th"
+        "text": "Yes, it's 4582"
       },
       {
         "speaker": "2",
-        "text": "She has an opening next Tuesday at 10 AM or Thursday at 2 PM"
+        "text": "Which transaction are you disputing?"
       },
       {
         "speaker": "1",
-        "text": "Tuesday at 10 would be perfect"
+        "text": "The $129.99 charge from Digital Store yesterday"
       }
     ]
   },
   {
-    "audio_path": "3gym.m4a",
+    "audio_path": "3banking_l.m4a",
     "speaker_turns": [
       {
         "speaker": "1",
-        "text": "I'm interested in joining your gym. What membership options do you have?"
+        "text": "I noticed an unauthorized transaction on my credit card"
       },
       {
         "speaker": "2",
-        "text": "We offer monthly plans starting at $39.99 or annual memberships at $399"
+        "text": "I'll help you with that. Can you verify the last four digits of your card?"
       },
       {
         "speaker": "1",
-        "text": "Does the monthly plan include fitness classes?"
+        "text": "Yes, it's 4582"
       },
       {
         "speaker": "2",
-        "text": "Basic classes are included, but specialty classes have an extra fee"
+        "text": "Which transaction are you disputing?"
       },
       {
         "speaker": "1",
-        "text": "I'll take the monthly plan then"
+        "text": "The $129.99 charge from Digital Store yesterday"
       }
     ]
   },
   {
-    "audio_path": "4hotel.m4a",
+    "audio_path": "4banking.m4a",
     "speaker_turns": [
       {
         "speaker": "1",
-        "text": "I need to modify my hotel reservation for next month"
+        "text": "I noticed an unauthorized transaction on my credit card"
       },
       {
         "speaker": "2",
-        "text": "I'll help you with that. What's your confirmation number?"
+        "text": "I'll help you with that. Can you verify the last four digits of your card?"
       },
       {
         "speaker": "1",
-        "text": "It's HB452891"
+        "text": "Yes, it's 4582"
       },
       {
         "speaker": "2",
-        "text": "I see your booking for March 15th. What changes would you like to make?"
+        "text": "Which transaction are you disputing?"
       },
       {
         "speaker": "1",
-        "text": "Can I extend it for one more night?"
+        "text": "The $129.99 charge from Digital Store yesterday"
+      }
+    ]
+  },
+  {
+    "audio_path": "5car_j.m4a",
+    "speaker_turns": [
+      {
+        "speaker": "1",
+        "text": "Hi, I need to extend my rental car for three more days"
+      },
+      {
+        "speaker": "2",
+        "text": "I can help with that. What's your rental agreement number?"
+      },
+      {
+        "speaker": "1",
+        "text": "It's RX789234"
+      },
+      {
+        "speaker": "2",
+        "text": "The additional three days will be $147 total. Would you like to use the same card?"
+      },
+      {
+        "speaker": "1",
+        "text": "Yes, please use the same card"
+      }
+    ]
+  },
+  {
+    "audio_path": "6car_l.m4a",
+    "speaker_turns": [
+      {
+        "speaker": "1",
+        "text": "Hi, I need to extend my rental car for three more days"
+      },
+      {
+        "speaker": "2",
+        "text": "I can help with that. What's your rental agreement number?"
+      },
+      {
+        "speaker": "1",
+        "text": "It's RX789234"
+      },
+      {
+        "speaker": "2",
+        "text": "The additional three days will be $147 total. Would you like to use the same card?"
+      },
+      {
+        "speaker": "1",
+        "text": "Yes, please use the same card"
+      }
+    ]
+  },
+  {
+    "audio_path": "7car_rental.m4a",
+    "speaker_turns": [
+      {
+        "speaker": "1",
+        "text": "Hi, I need to extend my rental car for three more days"
+      },
+      {
+        "speaker": "2",
+        "text": "I can help with that. What's your rental agreement number?"
+      },
+      {
+        "speaker": "1",
+        "text": "It's RX789234"
+      },
+      {
+        "speaker": "2",
+        "text": "The additional three days will be $147 total. Would you like to use the same card?"
+      },
+      {
+        "speaker": "1",
+        "text": "Yes, please use the same card"
       }
     ]
   }

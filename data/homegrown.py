@@ -19,6 +19,7 @@ class HomegrownDataset(Dataset):
                 duration=30,  # max duration in seconds
                 transform=None,
                 split='train',
+                numbered_speakers=True
             ):
         """
         Args:
@@ -37,6 +38,7 @@ class HomegrownDataset(Dataset):
         self.sample_rate = sample_rate
         self.duration = duration
         self.transform = transform
+        self.numbered_speakers = numbered_speakers
         
         # Get all m4a files and create metadata DataFrame
         self.files = list(self.audio_dir.glob('*.m4a'))
@@ -113,7 +115,7 @@ class HomegrownDataset(Dataset):
     def _get_transcript_w_speaker_annotations(self, filename):
         with open(self.transcript_filepath, 'r') as f:
             data = json.load(f)
-            processed_data = process_transcript_json(data, filename)
+            processed_data = process_transcript_json(data, filename, numbered_speakers=self.numbered_speakers)
         return processed_data
 
     def __len__(self):

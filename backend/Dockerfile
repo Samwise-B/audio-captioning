@@ -5,7 +5,9 @@ FROM python:3.9-slim
 WORKDIR /app
 
 # update and install requirements for whisper model
-RUN apt update && apt install -y ffmpeg
+RUN apt-get update && \
+    apt-get install -y ffmpeg && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy the requirements file to the container
 COPY requirements.txt .

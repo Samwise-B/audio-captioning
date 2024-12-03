@@ -3,7 +3,7 @@ import librosa
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
 from minio_client import MinioClientWrapper
-from models.utils import validate
+from models.utils import infer
 from models.CustomWhisper import CustomWhisper
 
 import tempfile
@@ -71,7 +71,7 @@ async def process_audio(audio_file: UploadFile = File(...), task: str = Form(...
         # # Decode the generated ids
         # transcription = processor.batch_decode(generated_ids, skip_special_tokens=False)[0]
 
-        transcription = validate(diarization_model.model, inputs['input_features'], diarization_model.tokenizer)
+        transcription = infer(diarization_model.model, inputs['input_features'], diarization_model.tokenizer)
         print(f"transcription {transcription}")
         
         return JSONResponse(content={"subtitle": transcription})

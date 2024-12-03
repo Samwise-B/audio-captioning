@@ -3,16 +3,18 @@ from dataclasses import dataclass
 import re
 from typing import List
 
+from training.utils import clean_prediction
+
 
 @dataclass
 class Utterance:
     speaker: str
     text: str
 
-def parse_transcript(transcript: str) -> List[Utterance]:
+def parse_transcript_numbered(transcript: str) -> List[Utterance]:
     """Parse the transcript format into a list of Utterances"""
     # Remove transcript markers and language tags
-    cleaned = transcript.replace("<|startoftranscript|>", "").replace("<|en|>", "").replace("<|notimestamps|>", "").replace("<|endoftext|>", "")
+    cleaned = clean_prediction(transcript)
     
     # Split into utterances and parse
     utterances = []
@@ -26,7 +28,7 @@ def parse_transcript(transcript: str) -> List[Utterance]:
     
     return utterances
 
-def calculate_der(output: List[Utterance], target: List[Utterance]) -> float:
+def calculate_der_numbered(output: List[Utterance], target: List[Utterance]) -> float:
     """
     Calculate Diarization Error Rate (DER)
     DER = Number of speaker errors / Total number of utterances
@@ -39,6 +41,30 @@ def calculate_der(output: List[Utterance], target: List[Utterance]) -> float:
     speaker_errors += sum(1 for o, t in zip(output, target) if o.speaker != t.speaker)
 
     return speaker_errors / len(target)
+
+
+def parse_transcript(transcript: str) -> List[Utterance]:
+    """Parse the transcript format into a list of s"""
+    cleaned = clean_prediction(transcript)
+    segments = [s.strip() for s in cleaned.split("<|speaker_change|>") if s.strip()]
+    return segments
+
+def calculate_der(output_segments, target_segments):
+    errors = 0
+    if len(output_segments) != len(target_segments):
+        errors += abs(len(output_segments) - len(target_segments))
+    
+    min_len = min(len(output_segments), len(target_segments))
+    if min_len > 1:
+        for i in range(1, min_len):
+            # For each position where target has a change, check if output has one too
+            target_has_change = i < len(target_segments)
+            output_has_change = i < len(output_segments)
+            if target_has_change != output_has_change:
+                errors += 1
+    
+    total_possible_changes = len(target_segments) - 1  # Number of boundaries between segments
+    return errors / max(1, total_possible_changes)  # A
 
 
 if __name__ == "__main__":
@@ -74,7 +100,7 @@ if __name__ == "__main__":
     # <|speaker_2|> You might want to reschedule. They're predicting several inches
     # <|speaker_1|> Thanks for letting me know. I'll make other plans."
     # """
-    output_utterances = parse_transcript(output)
-    target_utterances = parse_transcript(target)
-    der = calculate_der(output_utterances, target_utterances)
+    output_utterances = parse_transcript_numbered(output)
+    target_utterances = parse_transcript_numbered(target)
+    der = calculate_der_numbered(output_utterances, target_utterances)
     print(f"der:{der}")

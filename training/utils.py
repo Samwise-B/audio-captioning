@@ -1,7 +1,7 @@
 import torch
 import whisper
 
-from models.whisper import CustomWhisper
+from models.CustomWhisper import CustomWhisper
 
 def collate_fn(batch):
     # Handle audio padding

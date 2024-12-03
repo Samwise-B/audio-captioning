@@ -4,7 +4,7 @@ from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
 from minio_client import MinioClientWrapper
 from models.utils import validate
-from models.whisper import CustomWhisper
+from models.CustomWhisper import CustomWhisper
 
 import tempfile
 

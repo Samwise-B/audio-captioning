@@ -4,7 +4,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from data.homegrown import HomegrownDataset
-from models.whisper import CustomWhisper
+from models.CustomWhisper import CustomWhisper
 from training.sam_r_train import validate_batch
 from training.utils import collate_fn
 

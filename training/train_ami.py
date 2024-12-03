@@ -11,7 +11,7 @@ repo_dir = Path(__file__).parent.parent
 sys.path.append(str(repo_dir))
 
 from data.ami import Ami
-from models.whisper import CustomWhisper
+from models.CustomWhisper import CustomWhisper
 from utils.inference import run_inference
 
 model_dir = Path(__file__).parent.parent / "weights"

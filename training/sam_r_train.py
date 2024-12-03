@@ -5,7 +5,7 @@ import wandb
 
 from data.homegrown import HomegrownDataset
 from models.utils import validate_batch
-from models.whisper import CustomWhisper
+from models.CustomWhisper import CustomWhisper
 from training.utils import collate_fn
 
 from backend.minio_client import MinioClientWrapper

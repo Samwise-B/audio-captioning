@@ -33,12 +33,11 @@ def calculate_der(output: List[Utterance], target: List[Utterance]) -> float:
     """
     speaker_errors = 0
     if len(output) != len(target):
-        #  allow different number of speaker blocks, but penalise
+        #  allow different number of speaker blocks, but penalises
         speaker_errors += abs(len(output) - len(target))
     
     speaker_errors += sum(1 for o, t in zip(output, target) if o.speaker != t.speaker)
 
-    print(speaker_errors)
     return speaker_errors / len(target)
 
 

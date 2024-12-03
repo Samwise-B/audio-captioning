@@ -52,6 +52,7 @@ def validate_batch(model, audio, targets, tokenizer):
     model.eval()
     batch_size = audio.shape[0]
     results = []
+    total_der = 0
     for batch_idx in range(batch_size):
         audio_i = audio[batch_idx:batch_idx+1]
         target = targets[batch_idx:batch_idx+1][0]
@@ -74,7 +75,8 @@ def validate_batch(model, audio, targets, tokenizer):
         output_utterances = parse_transcript(prediction)
         target_utterances = parse_transcript(target)
         der = calculate_der(output_utterances, target_utterances)
+        total_der += der
         print(f"der:{der}")
         print("===================")
-    
-    return results
+    avg_der = total_der / batch_size
+    return avg_der

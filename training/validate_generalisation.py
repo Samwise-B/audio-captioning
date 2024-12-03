@@ -2,7 +2,6 @@ import whisper
 
 import torch
 from torch.utils.data import DataLoader
-from jiwer import wer
 
 from data.homegrown import HomegrownDataset
 from models.whisper import CustomWhisper

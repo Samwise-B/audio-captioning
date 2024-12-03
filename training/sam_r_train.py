@@ -1,5 +1,6 @@
 import torch
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 import wandb
 
 from data.homegrown import HomegrownDataset
@@ -21,7 +22,7 @@ def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=10):
     for epoch in range(num_epochs):
         model.train()
         total_loss = 0
-        for _, batch in enumerate(train_dataloader):
+        for _, batch in tqdm(enumerate(train_dataloader)):
             audio = batch['audio']
 
             # shift for teacher forcing
@@ -52,10 +53,10 @@ def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=10):
 
         model.eval()
         with torch.no_grad():
-            for batch_idx, val_batch in enumerate(val_dataloader):
-                results = validate_batch(model, val_batch['audio'], val_batch['texts'], tokenizer)
+            for _, val_batch in tqdm(enumerate(val_dataloader)):
+                avg_der = validate_batch(model, val_batch['audio'], val_batch['texts'], tokenizer)
                 wandb.log({
-                    f"validation_sample_{batch_idx}": results[0],  # Log each batch separately
+                    "avg_der": avg_der,
                     "epoch": epoch
                 })
 

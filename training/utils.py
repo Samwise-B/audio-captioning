@@ -12,7 +12,8 @@ def collate_fn(batch):
     texts = [item['transcript'] for item in batch]
     custom_whisper = CustomWhisper(base_model="openai/whisper-tiny", max_speakers=5)
     tokenizer = custom_whisper.tokenizer
-    tokenized = tokenizer(texts, padding=True, return_tensors="pt")
+    # this is a place where I am tokenizing and it's different to what I use i 'validate'
+    tokenized = tokenizer(texts, padding=True, return_tensors="pt") # [50258, 50363, ...] : '<|startoftranscript|>''<|notimestamps|>' ..
     
     return {
         'audio': padded_audio,

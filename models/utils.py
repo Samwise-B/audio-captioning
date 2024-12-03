@@ -1,5 +1,7 @@
 import torch
 
+from training.diarization_accuracy import calculate_der, parse_transcript
+
 def get_start_input_ids(tokenizer):
     input_ids = []
 
@@ -7,11 +9,6 @@ def get_start_input_ids(tokenizer):
     sot_token_id = tokenizer.convert_tokens_to_ids(sot_token)
 
     input_ids += [sot_token_id]
-
-    language_token = '<|en|>'
-    language_token_id = tokenizer.convert_tokens_to_ids(language_token)
-
-    input_ids += [language_token_id]
 
     no_timestamps_token = '<|notimestamps|>'
     no_timestamps_token_id = tokenizer.convert_tokens_to_ids(no_timestamps_token)
@@ -22,6 +19,8 @@ def clean_prediction(decoded_text):
     special_tokens = [
         "<|en|>",
         "<|transcribe|>",
+        # TODO why are we ever returning <|translate|>??
+        "<|translate|>",
         "<|notimestamps|>",
         "<|endoftext|>",
         "<|startoftranscript|>",
@@ -35,7 +34,8 @@ def validate(model, input_mel, tokenizer):
     eot_token_id = tokenizer.convert_tokens_to_ids(eot_token)
     model.eval()
     with torch.no_grad():
-        input_ids = get_start_input_ids(tokenizer)
+        #  this is different to how I tokenize in the collate_fn
+        input_ids = get_start_input_ids(tokenizer) # 50258, 50363 ('<|startoftranscript|>', '<|notimestamps|>')
         input_tkns_tensor = torch.tensor(input_ids).unsqueeze(0).to(model.device)
 
         for i in range(80):
@@ -51,14 +51,30 @@ def validate(model, input_mel, tokenizer):
 def validate_batch(model, audio, targets, tokenizer):
     model.eval()
     batch_size = audio.shape[0]
+    results = []
     for batch_idx in range(batch_size):
         audio_i = audio[batch_idx:batch_idx+1]
-        target = targets[batch_idx:batch_idx+1]
+        target = targets[batch_idx:batch_idx+1][0]
         prediction = validate(model, audio_i, tokenizer)
+        prediction = clean_prediction(prediction)
+        
+        result = {
+            "target": target,  # Assuming target is a list/tensor
+            "prediction": prediction
+        }
+        results.append(result)
+        
         print("===================")
         print(f"Batch item {batch_idx}\n")
         print(f"Target:\n")
         print(target)
         print(f"\nPrediction:\n")
-        print(clean_prediction(prediction))
+        print(prediction)
+
+        output_utterances = parse_transcript(prediction)
+        target_utterances = parse_transcript(target)
+        der = calculate_der(output_utterances, target_utterances)
+        print(f"der:{der}")
         print("===================")
+    
+    return results

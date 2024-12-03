@@ -60,8 +60,6 @@ if __name__ == "__main__":
     <|speaker_1|> 9 AM works better for me
     """
 
-
-
     # FROM CURRENT VALIDATION
     # output= """
     # <|speaker_1|> No
@@ -77,7 +75,6 @@ if __name__ == "__main__":
     # <|speaker_2|> You might want to reschedule. They're predicting several inches
     # <|speaker_1|> Thanks for letting me know. I'll make other plans."
     # """
-
     output_utterances = parse_transcript(output)
     target_utterances = parse_transcript(target)
     der = calculate_der(output_utterances, target_utterances)

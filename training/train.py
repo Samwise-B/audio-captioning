@@ -24,7 +24,7 @@ def save_checkpoint(model, optimizer, epoch, global_step, checkpoint_dir="./chec
     }, checkpoint_path)
     print(f"Checkpoint saved at {checkpoint_path}")
 
-def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=10, numbered_speakers=True, checkpoint_dir="./checkpoints"):
+def train(model, train_dataloader, tokenizer, num_epochs=10, numbered_speakers=True, checkpoint_dir="./checkpoints"):
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
     criterion = torch.nn.CrossEntropyLoss()
     
@@ -65,14 +65,14 @@ def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=10, num
 
         save_checkpoint(model, optimizer, epoch, global_step, checkpoint_dir)
 
-        model.eval()
-        with torch.no_grad():
-            for _, val_batch in tqdm(enumerate(val_dataloader)):
-                avg_der = validate_batch(model, val_batch['input_features'], val_batch['text'], tokenizer, numbered_speakers=numbered_speakers)
-                wandb.log({
-                    "avg_der": avg_der,
-                    "epoch": epoch
-                })
+        # model.eval()
+        # with torch.no_grad():
+        #     for _, val_batch in tqdm(enumerate(val_dataloader)):
+        #         avg_der = validate_batch(model, val_batch['input_features'], val_batch['text'], tokenizer, numbered_speakers=numbered_speakers)
+        #         wandb.log({
+        #             "avg_der": avg_der,
+        #             "epoch": epoch
+        #         })
 
 def main():
     numbered_speakers=False
@@ -92,11 +92,11 @@ def main():
     train_dataloader = DataLoader(train_dataset, batch_size=128, collate_fn=Ami.get_collate_fn(train_dataset.tk, train_dataset.extractor), num_workers=0)
 
     # val_dataset = HomegrownDataset(split='validate', numbered_speakers=numbered_speakers)
-    val_dataset = Ami(split="validation", subset_size=500)
-    val_dataloader = DataLoader(val_dataset, batch_size=32, collate_fn=Ami.get_collate_fn(val_dataset.tk, val_dataset.extractor))
-    print("finished datasets and dataloaders")
+    # val_dataset = Ami(split="validation", subset_size=500)
+    # val_dataloader = DataLoader(val_dataset, batch_size=32, collate_fn=Ami.get_collate_fn(val_dataset.tk, val_dataset.extractor))
+    # print("finished datasets and dataloaders")
 
-    train(model, train_dataloader, val_dataloader, tokenizer, numbered_speakers=numbered_speakers)
+    train(model, train_dataloader, tokenizer, numbered_speakers=numbered_speakers)
 
     # local_weights_path = "./weights/whisper_diarization_v3.pth"
     torch.save(model.state_dict(), "./weights/whisper_diarization_ami_v1.pth")

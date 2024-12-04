@@ -39,6 +39,7 @@ def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=10, num
         model.train()
         total_loss = 0
         for _, batch in tqdm(enumerate(train_dataloader)):
+            print(f"batch:{batch}")
             audio = batch['audio']
 
             # shift for teacher forcing

@@ -39,7 +39,7 @@ def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=10, num
         model.train()
         total_loss = 0
         for _, batch in tqdm(enumerate(train_dataloader)):
-            print(f"batch:{batch}")
+            print(f"batch")
             audio = batch['audio']
 
             # shift for teacher forcing
@@ -54,6 +54,7 @@ def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=10, num
                 attention_mask,
                 input_ids, 
             )
+            print(f"outputs:{outputs}")
             
             loss = criterion(outputs.logits.transpose(1, 2), target_ids)
             loss.backward()
@@ -87,19 +88,20 @@ def main():
     tokenizer = custom_model_wrapper.tokenizer
     model = custom_model_wrapper.model
 
-    minio = MinioClientWrapper()
-
+    # minio = MinioClientWrapper()
+    print("datasets and dataloaders")
     train_dataset = HomegrownDataset(split='train', numbered_speakers=numbered_speakers)
     train_dataloader = DataLoader(train_dataset, batch_size=10, collate_fn=collate_fn)
 
     val_dataset = HomegrownDataset(split='validate', numbered_speakers=numbered_speakers)
     val_dataloader = DataLoader(val_dataset, batch_size=3, collate_fn=collate_fn)
+    print("finished datasets and dataloaders")
 
     train(model, train_dataloader, val_dataloader, tokenizer, numbered_speakers=numbered_speakers)
 
     local_weights_path = "./weights/whisper_diarization_v3.pth"
     torch.save(model.state_dict(), "./weights/whisper_diarization_v3.pth")
-    minio.save_weights(local_weights_path, "whisper_diarization", "v3")
+    # minio.save_weights(local_weights_path, "whisper_diarization", "v3")
 
 if __name__ == "__main__":
     main()

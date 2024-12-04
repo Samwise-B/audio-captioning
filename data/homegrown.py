@@ -43,7 +43,6 @@ class HomegrownDataset(Dataset):
         
         # Get all m4a files and create metadata DataFrame
         self.files = list(self.audio_dir.glob('*.m4a'))
-        print(f"length:{len(self.files)}")
         self.metadata = self._create_metadata()
         
         # Create resampler if needed
@@ -130,6 +129,7 @@ class HomegrownDataset(Dataset):
         Returns:
             dict: Contains audio tensor and metadata
         """
+        print("getting item in homegrown dataset")
         # Get file path and metadata
         row = self.metadata.iloc[idx]
         file_path = row['file_path']
@@ -145,6 +145,8 @@ class HomegrownDataset(Dataset):
         # Apply transforms if any
         if self.transform:
             audio = self.transform(audio)
+
+        print("about to return from homegrown dataset")
         
         return {
             'audio': audio,

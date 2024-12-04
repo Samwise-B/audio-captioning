@@ -32,8 +32,8 @@ def train(model, train_dataloader, tokenizer, num_epochs=10, numbered_speakers=T
     for epoch in range(num_epochs):
         model.train()
         total_loss = 0
-        for _, batch in tqdm(enumerate(train_dataloader)):
-            print(f"batch")
+        for batch in tqdm(train_dataloader):
+            # print(f"batch")
             audio = batch['input_features']
 
             # shift for teacher forcing
@@ -48,7 +48,7 @@ def train(model, train_dataloader, tokenizer, num_epochs=10, numbered_speakers=T
                 attention_mask,
                 input_ids, 
             )
-            print(f"output")
+            # print(f"output")
             
             loss = criterion(outputs.logits.transpose(1, 2), target_ids)
             loss.backward()

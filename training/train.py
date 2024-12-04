@@ -89,7 +89,7 @@ def main():
     train_dataset = Ami(split="train", subset_size=5000)
     # because the actual length of the dataset is unpredictable ( it depends on how the conversations get chunked up) we need drop_last=True or there
     # may be mismatch and the dataloader will try to iterate too many time
-    train_dataloader = DataLoader(train_dataset, batch_size=128, collate_fn=Ami.get_collate_fn(train_dataset.tk, train_dataset.extractor), num_workers=0)
+    train_dataloader = DataLoader(train_dataset, batch_size=128, collate_fn=Ami.get_collate_fn(train_dataset.tk, train_dataset.extractor))
 
     # val_dataset = HomegrownDataset(split='validate', numbered_speakers=numbered_speakers)
     # val_dataset = Ami(split="validation", subset_size=500)

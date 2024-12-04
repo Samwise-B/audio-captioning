@@ -54,7 +54,7 @@ def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=10, num
                 attention_mask,
                 input_ids, 
             )
-            print(f"outputs:{outputs}")
+            print(f"output")
             
             loss = criterion(outputs.logits.transpose(1, 2), target_ids)
             loss.backward()

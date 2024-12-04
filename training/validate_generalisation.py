@@ -5,7 +5,8 @@ from torch.utils.data import DataLoader
 
 from data.homegrown import HomegrownDataset
 from models.CustomWhisper import CustomWhisper
-from training.utils import collate_fn, validate_batch
+from training.utils import collate_fn
+from training.validation import validate_batch
 
 def main():
     custom_model_wrapper = CustomWhisper(base_model="openai/whisper-tiny", max_speakers=5)

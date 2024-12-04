@@ -5,9 +5,10 @@ import wandb
 
 from data.homegrown import HomegrownDataset
 from models.CustomWhisper import CustomWhisper
-from training.utils import collate_fn, validate_batch
+from training.utils import collate_fn
 
 from backend.minio_client import MinioClientWrapper
+from training.validation import validate_batch
 
 def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=10, numbered_speakers=True):
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
@@ -16,6 +17,8 @@ def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=10, num
     for name,param in model.named_parameters():
         if(param.requires_grad):
             print(f"Parameter {name} has requires_grad=True")
+        if( not param.requires_grad):
+            print(f"Parameter {name} has requires_grad=False")
     
     
     global_step = 0

@@ -170,6 +170,7 @@ cython_debug/
 .vscode
 wav_files_train
 wav_files_validate
+wav_files_one_word
 weights
 
 minio_data

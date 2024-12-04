@@ -9,6 +9,7 @@ import json
 import os
 
 from data.utils import process_transcript_json
+from training.utils import collate_fn
 
 class HomegrownDataset(Dataset):
     """
@@ -157,34 +158,34 @@ class HomegrownDataset(Dataset):
         }
 
 # Example usage
-# if __name__ == "__main__":
-#     # Create dataset
+if __name__ == "__main__":
+    # Create dataset
 
-#     dataset = HomegrownDataset(
-#         sample_rate=16000,
-#         duration=30,
-#         split='train',
-#     )
+    dataset = HomegrownDataset(
+        sample_rate=16000,
+        duration=30,
+        split='train',
+    )
     
-#     # Create dataloader
-#     dataloader = DataLoader(
-#         dataset,
-#         batch_size=2,
-#         shuffle=True,
-#         num_workers=1,
-#         collate_fn=collate_fn
-#     )
+    # Create dataloader
+    dataloader = DataLoader(
+        dataset,
+        batch_size=2,
+        shuffle=True,
+        num_workers=1,
+        collate_fn=collate_fn
+    )
     
-#     # Print dataset info
-#     print(f"\nDataset size: {len(dataset)}")
-#     print("\nMetadata summary:")
-#     print(dataset.metadata.describe())
+    # Print dataset info
+    print(f"\nDataset size: {len(dataset)}")
+    print("\nMetadata summary:")
+    print(dataset.metadata.describe())
     
-#     # Example of loading a batch
-#     for batch in dataloader:
-#         print("\nBatch info:")
-#         print(f"Audio shape: {batch['audio'].shape}")
-#         print(f"Script numbers: {batch['script_number']}")
-#         print(f"File path: {batch['file_path']}")
-#         print(f"Transcript: {batch['transcript']}")
-#         break
+    # Example of loading a batch
+    for batch in dataloader:
+        print("\nBatch info:")
+        print(f"Audio shape: {batch['audio'].shape}")
+        print(f"Script numbers: {batch['script_number']}")
+        print(f"File path: {batch['file_path']}")
+        print(f"Transcript: {batch['transcript']}")
+        break

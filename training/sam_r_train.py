@@ -1,3 +1,4 @@
+import os
 import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -10,7 +11,19 @@ from training.utils import collate_fn
 from backend.minio_client import MinioClientWrapper
 from training.validation import validate_batch
 
-def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=10, numbered_speakers=True):
+def save_checkpoint(model, optimizer, epoch, global_step, checkpoint_dir="./checkpoints"):
+    """Saves model and optimizer state as a checkpoint."""
+    os.makedirs(checkpoint_dir, exist_ok=True)
+    checkpoint_path = os.path.join(checkpoint_dir, f"checkpoint_epoch_{epoch}_step_{global_step}.pth")
+    torch.save({
+        'epoch': epoch,
+        'global_step': global_step,
+        'model_state_dict': model.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict(),
+    }, checkpoint_path)
+    print(f"Checkpoint saved at {checkpoint_path}")
+
+def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=10, numbered_speakers=True, checkpoint_dir="./checkpoints"):
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
     criterion = torch.nn.CrossEntropyLoss()
 
@@ -53,6 +66,8 @@ def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=10, num
 
         avg_loss = total_loss / len(train_dataloader)
         wandb.log({"epoch_loss": avg_loss, "epoch": epoch})
+
+        save_checkpoint(model, optimizer, epoch, global_step, checkpoint_dir)
 
         model.eval()
         with torch.no_grad():

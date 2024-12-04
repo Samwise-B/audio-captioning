@@ -1,0 +1,9 @@
+torch
+tqdm
+wandb
+torchaudio
+pandas
+pydub
+transformers
+openai-whisper
+minio

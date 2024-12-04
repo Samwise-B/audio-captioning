@@ -6,9 +6,10 @@ from pathlib import Path
 from pydub import AudioSegment
 import tempfile
 import json
+import os
 
 from data.utils import process_transcript_json
-from training.utils import collate_fn
+
 class HomegrownDataset(Dataset):
     """
     PyTorch Dataset for speaker diarization training data with M4A support
@@ -29,10 +30,10 @@ class HomegrownDataset(Dataset):
             transform (callable, optional): Optional transform to be applied on audio
         """
         if(split == 'train'):
-            audio_dir = "/Users/samuelrae/code/MLX/week7-audio/audio-captioning/wav_files_train"
+            audio_dir = os.path.join(os.getcwd(), "wav_files_train")
             self.transcript_filepath = 'training_data/training_data.json'
         if(split == 'validate'):
-            audio_dir = "/Users/samuelrae/code/MLX/week7-audio/audio-captioning/wav_files_validate"
+            audio_dir = os.path.join(os.getcwd(), "wav_files_validate")
             self.transcript_filepath = 'training_data/training_data_validation.json'
         self.audio_dir = Path(audio_dir)
         self.sample_rate = sample_rate
@@ -154,34 +155,34 @@ class HomegrownDataset(Dataset):
         }
 
 # Example usage
-if __name__ == "__main__":
-    # Create dataset
+# if __name__ == "__main__":
+#     # Create dataset
 
-    dataset = HomegrownDataset(
-        sample_rate=16000,
-        duration=30,
-        split='train',
-    )
+#     dataset = HomegrownDataset(
+#         sample_rate=16000,
+#         duration=30,
+#         split='train',
+#     )
     
-    # Create dataloader
-    dataloader = DataLoader(
-        dataset,
-        batch_size=2,
-        shuffle=True,
-        num_workers=1,
-        collate_fn=collate_fn
-    )
+#     # Create dataloader
+#     dataloader = DataLoader(
+#         dataset,
+#         batch_size=2,
+#         shuffle=True,
+#         num_workers=1,
+#         collate_fn=collate_fn
+#     )
     
-    # Print dataset info
-    print(f"\nDataset size: {len(dataset)}")
-    print("\nMetadata summary:")
-    print(dataset.metadata.describe())
+#     # Print dataset info
+#     print(f"\nDataset size: {len(dataset)}")
+#     print("\nMetadata summary:")
+#     print(dataset.metadata.describe())
     
-    # Example of loading a batch
-    for batch in dataloader:
-        print("\nBatch info:")
-        print(f"Audio shape: {batch['audio'].shape}")
-        print(f"Script numbers: {batch['script_number']}")
-        print(f"File path: {batch['file_path']}")
-        print(f"Transcript: {batch['transcript']}")
-        break
+#     # Example of loading a batch
+#     for batch in dataloader:
+#         print("\nBatch info:")
+#         print(f"Audio shape: {batch['audio'].shape}")
+#         print(f"Script numbers: {batch['script_number']}")
+#         print(f"File path: {batch['file_path']}")
+#         print(f"Transcript: {batch['transcript']}")
+#         break

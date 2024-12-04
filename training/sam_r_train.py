@@ -14,11 +14,11 @@ def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=10, num
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
     criterion = torch.nn.CrossEntropyLoss()
 
-    for name,param in model.named_parameters():
-        if(param.requires_grad):
-            print(f"Parameter {name} has requires_grad=True")
-        if( not param.requires_grad):
-            print(f"Parameter {name} has requires_grad=False")
+    # for name,param in model.named_parameters():
+    #     if(param.requires_grad):
+    #         print(f"Parameter {name} has requires_grad=True")
+    #     if( not param.requires_grad):
+    #         print(f"Parameter {name} has requires_grad=False")
     
     
     global_step = 0

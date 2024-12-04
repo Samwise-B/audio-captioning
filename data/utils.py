@@ -5,7 +5,7 @@ def process_transcript_json(data_array, filename, numbered_speakers=True):
         if i > 0:
             transcript_with_speaker_annotations += ' '
         if numbered_speakers:
-            transcript_with_speaker_annotations += f"<|speaker_{(snippet["speaker"])}|> "
+            transcript_with_speaker_annotations += f"<|speaker_{(snippet['speaker'])}|> "
         elif i > 0:
             transcript_with_speaker_annotations += f"<|speaker_change|> "
         transcript_with_speaker_annotations += f"{snippet['text']}"

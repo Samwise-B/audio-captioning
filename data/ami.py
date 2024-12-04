@@ -1,134 +1,148 @@
-import torch
 from torch.utils.data import Dataset, DataLoader, Subset
 from transformers import WhisperTokenizer, WhisperFeatureExtractor
 from datasets import load_dataset
 from torch.nn.utils.rnn import pad_sequence
-
-# import whisper
-
+import numpy as np
 
 class Ami(Dataset):
     def __init__(
         self,
         split: str,
         subset_size: int = None,
-        chunk_size: int = 30,
-        max_speakers: int = 10,
+        chunk_size: int = 30,  # Max duration in seconds for a chunk
     ):
         self.split = split
-        self.ds = load_dataset("edinburghcstr/ami", "ihm", trust_remote_code=True)
-        self.ds = self.ds[split]
+        self.ds = load_dataset("edinburghcstr/ami", "ihm", trust_remote_code=True, split=f"{split}[:{subset_size}]" if subset_size else split)
+        
+        # self.ds = self.ds[split]
         self.subset_size = subset_size
 
-        self.tk = WhisperTokenizer.from_pretrained("openai/whisper-base")
+        self.tk = WhisperTokenizer.from_pretrained("openai/whisper-tiny")
         self.extractor = WhisperFeatureExtractor()
 
-        self.max_speakers = max_speakers
-        self.speaker_labels = [f"<|speaker_{i}|>" for i in range(1, max_speakers + 1)]
-        self.tk.add_tokens(self.speaker_labels, special_tokens=True)
+        self.speaker_label = "<|speaker_change|>"
+        self.tk.add_tokens([self.speaker_label], special_tokens=True)
         self.tk_to_id = self.tk.convert_tokens_to_ids
-        self.speaker_labels = [
-            self.tk_to_id(f"<|speaker_{i}|>") for i in range(1, max_speakers + 1)
-        ]
-        self.max_chunk_size = chunk_size * 16000
+        self.max_chunk_size = chunk_size * 16000  # Sampling rate is 16000 Hz
+
+        self.pointer = 0  # Maintain a pointer to track dataset position
+        self.chunk_count = self._precompute_chunks()
+        self.prev_speaker = ""
+
+    def _precompute_chunks(self):
+        """
+        Precompute the number of chunks in the dataset based on the grouping logic.
+        """
+        total_chunks = 0
+        current_meeting_id = None
+        current_audio_length = 0
+
+        for row in self.ds:
+            audio = row["audio"]["array"]
+            meeting_id = row["meeting_id"]
+
+            if (
+                meeting_id != current_meeting_id
+                or current_audio_length + len(audio) > self.max_chunk_size
+            ):
+                # Start a new chunk
+                total_chunks += 1
+                current_meeting_id = meeting_id
+                current_audio_length = len(audio)
+            else:
+                # Add to the current chunk
+                current_audio_length += len(audio)
+
+        # Apply subset size if specified
+        if self.subset_size:
+            return min(total_chunks, self.subset_size)
+        return total_chunks
 
     def __len__(self):
-        if self.subset_size:
-            return len(self.ds.select(range(self.subset_size)))
-        else:
-            return len(self.ds)
+        return self.chunk_count
 
     def __getitem__(self, idx):
         """
-        Combine multiple rows of audio and speakers until clip is 30 seconds long
+        Aggregate rows until:
+        - The meeting ID changes
+        - The total audio length exceeds max_chunk_size
         """
-        # print("index:", idx)
-        row = self.ds[idx]
-        row_count = 1
-        meeting_id = row["meeting_id"]
-        speaker_id = row["speaker_id"]
-        speaker_count = 0
-        speaker_to_id = {speaker_id: self.speaker_labels[speaker_count]}
+        # Ignore idx for sequential access
+        aggregated_audio = np.array([])
+        aggregated_text = ""
+        if self.pointer >= len(self.ds):  # Check if pointer exceeds dataset length
+            raise IndexError("Dataset pointer exceeds length")
 
-        caption = []
+        current_meeting_id = self.ds[self.pointer]["meeting_id"]
 
-        if self.ds[idx - 1]["meeting_id"] != meeting_id:
-            caption = (
-                [self.tk_to_id("<|startoftranscript|>")]
-                + [self.tk_to_id("<|en|>")]
-                + [self.tk_to_id("<|transcribe|>")]
-                + [self.tk_to_id("<|notimestamps|>")]
-            )
+        while self.pointer < len(self.ds):
+            row = self.ds[self.pointer]
+            audio = row["audio"]["array"]
+            text = row["text"]
+            meeting_id = row["meeting_id"]
 
-        caption += [speaker_to_id[speaker_id]] + self.tk.encode(
-            f" {row['text'].lower()} ", add_special_tokens=False
-        )
-        audio = torch.tensor(row["audio"]["array"])
-
-        while len(audio) < self.max_chunk_size:
-            # print(meeting_id)
-            # print(speaker_to_id)
-            # print(speaker_count)
-            # print(audio.shape)
-            # print(caption)
-
-            row = self.ds[idx + row_count]
-            row_count += 1
-
-            # check if new meeting
-            if meeting_id != row["meeting_id"]:
-                caption += [self.tk_to_id("<|endoftext|>")]
-                # add end of transcript
+            # Stop if meeting ID changes or audio length exceeds max_chunk_size
+            if meeting_id != current_meeting_id or len(aggregated_audio) + len(audio) > self.max_chunk_size:
                 break
 
-            # check if audio length exceeds max_size
-            if len(audio) + len(row["audio"]["array"]) > self.max_chunk_size:
-                break
+            # Append current row's data
+            aggregated_audio = np.concatenate((aggregated_audio, audio))
 
-            # add new speaker and check if
-            speaker_id = row["speaker_id"]
-            if not speaker_to_id.get(speaker_id):
-                speaker_count += 1
-                if speaker_count > self.max_speakers:
-                    break
+            if self.pointer > 0 and row["speaker_id"] != self.prev_speaker:
+                aggregated_text += f" <|change_speaker|> {text}"
+            elif self.pointer > 0:
+                aggregated_text += f" { text}"
+            else:
+                aggregated_text += text
 
-                speaker_to_id[speaker_id] = self.speaker_labels[speaker_count]
+            self.pointer += 1
+            self.prev_speaker = row["speaker_id"]
 
-            new_audio = torch.tensor(row["audio"]["array"])
-            audio = torch.cat((audio, new_audio), dim=0)
-            caption += [speaker_to_id[speaker_id]] + self.tk.encode(
-                f" {row['text'].lower()} ", add_special_tokens=False
+
+        return {
+            "text": aggregated_text.lower(),
+            "audio": aggregated_audio,
+            "meeting_id": current_meeting_id,
+        }
+
+    def reset_pointer(self):
+        """
+        Reset the pointer to the beginning of the dataset.
+        """
+        self.pointer = 0
+
+    @staticmethod
+    def get_collate_fn(tokenizer, extractor  = WhisperFeatureExtractor()):
+        def collate_fn(batch):
+            audio = [item["audio"] for item in batch]
+            texts = [item["text"] for item in batch]
+            input_features = extractor(audio, sampling_rate=16000, return_tensors="pt").input_features
+
+            tokenized_texts = tokenizer(
+                texts, 
+                padding=True, 
+                truncation=True,
+                return_tensors="pt"
             )
 
-        # print(caption)
-        caption = torch.tensor(caption)
-        preprocessed = self.extractor(
-            audio, sampling_rate=16000, return_tensors="pt", return_attention_mask=True
-        )
-        audio_inpt = preprocessed["input_features"]
-        audio_mask = preprocessed["attention_mask"]
-        cap_inpt = caption[:-1]
-        cap_targ = caption[1:]
-        # audio_features = audio_features[]
-        return audio_inpt, audio_mask, cap_inpt, cap_targ, cap_targ.shape[-1]
-
-    def collate_fn(batch):
-        audios, masks, cap_inpts, cap_targs, cap_lens = zip(*batch)
-
-        audio_batch = torch.cat(audios, dim=0)
-        mask_batch = torch.cat(masks, dim=0)
-        stacked_targs = torch.cat(cap_targs, dim=0)
-        padded_cap_inpts = pad_sequence(cap_inpts, batch_first=True)
-
-        # cap_lens = [len(t) for t in cap_targs]
-
-        return audio_batch, mask_batch, padded_cap_inpts, stacked_targs, cap_lens
+            return {
+                "input_ids": tokenized_texts.input_ids,
+                "attention_mask": tokenized_texts.attention_mask,
+                "input_features": input_features,
+            }
+        return collate_fn
 
 
 if __name__ == "__main__":
-    dataset = Ami("train")
-    row = dataset[0]
-    dataloader = DataLoader(dataset, batch_size=2, collate_fn=Ami.collate_fn)
+    dataset = Ami("train", subset_size=1000)
+    print(f"Number of chunks: {len(dataset)}")
+    tokenizer = dataset.tk
+    extractor = dataset.extractor
+
+    dataloader = DataLoader(dataset, batch_size=2, collate_fn=Ami.get_collate_fn(tokenizer, extractor))
 
     for batch in dataloader:
+        print(f"Batch Input IDs: {batch['input_ids'].shape}")
+        print(f"Batch Audio Features: {batch['input_features'].shape}")
+        print(f"Masks: {batch['attention_mask'].shape}")
         break

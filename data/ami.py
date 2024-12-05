@@ -1,3 +1,4 @@
+import logging
 from torch.utils.data import Dataset, DataLoader
 from transformers import WhisperTokenizer, WhisperFeatureExtractor
 from datasets import load_dataset
@@ -30,6 +31,7 @@ class Ami(Dataset):
         self.chunk_count = len(self.chunks)
 
     def _precompute_chunks(self):
+        logging.info("Precomputing dataset chunks")
         chunks = []
         current_chunk = {'audio': [], 'text': [], 'meeting_id': None, 'prev_speaker': None}
         current_audio_length = 0

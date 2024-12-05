@@ -1,3 +1,4 @@
+from io import BytesIO
 import os
 import torch
 from torch.utils.data import DataLoader
@@ -12,17 +13,31 @@ from training.utils import collate_fn
 from backend.minio_client import MinioClientWrapper
 from training.validation import validate_batch
 
-def save_checkpoint(model, optimizer, epoch, global_step, checkpoint_dir="./checkpoints"):
-    """Saves model and optimizer state as a checkpoint."""
-    os.makedirs(checkpoint_dir, exist_ok=True)
-    checkpoint_path = os.path.join(checkpoint_dir, f"checkpoint_epoch_{epoch}_step_{global_step}.pth")
+def save_checkpoint(model, optimizer, epoch, global_step, run=None):
+    """Saves model and optimizer state as a checkpoint directly to wandb."""
+    if run is None:
+        run = wandb.run
+    
+    # Save checkpoint to buffer in memory
+    buffer = BytesIO()
     torch.save({
         'epoch': epoch,
         'global_step': global_step,
         'model_state_dict': model.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),
-    }, checkpoint_path)
-    print(f"Checkpoint saved at {checkpoint_path}")
+    }, buffer)
+    buffer.seek(0)
+    
+    # Create and log artifact
+    artifact = wandb.Artifact(
+        name=f'model-checkpoint-{epoch}',
+        type='model',
+        description=f'Model checkpoint from epoch {epoch}, step {global_step}'
+    )
+    artifact.add_file('checkpoint.pth', buffer)
+    run.log_artifact(artifact)
+    
+    print(f"Checkpoint saved to wandb at epoch {epoch}, step {global_step}")
 
 def train(model, train_dataloader, tokenizer, num_epochs=10, numbered_speakers=True, checkpoint_dir="./checkpoints"):
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
@@ -86,20 +101,21 @@ def main():
     print("datasets and dataloaders")
     # train_dataset = HomegrownDataset(split='train', numbered_speakers=numbered_speakers)
     # TODO better design isto pass tokenizer into Ami
-    train_dataset = Ami(split="train", subset_size=5000)
+    train_dataset = Ami(split="train", subset_size=1000)
     # because the actual length of the dataset is unpredictable ( it depends on how the conversations get chunked up) we need drop_last=True or there
     # may be mismatch and the dataloader will try to iterate too many time
-    train_dataloader = DataLoader(train_dataset, batch_size=128, collate_fn=Ami.get_collate_fn(train_dataset.tk, train_dataset.extractor))
+    train_dataloader = DataLoader(train_dataset, batch_size=32, collate_fn=Ami.get_collate_fn(train_dataset.tk, train_dataset.extractor))
 
     # val_dataset = HomegrownDataset(split='validate', numbered_speakers=numbered_speakers)
     # val_dataset = Ami(split="validation", subset_size=500)
     # val_dataloader = DataLoader(val_dataset, batch_size=32, collate_fn=Ami.get_collate_fn(val_dataset.tk, val_dataset.extractor))
-    # print("finished datasets and dataloaders")
+    print("finished datasets and dataloaders")
 
     train(model, train_dataloader, tokenizer, numbered_speakers=numbered_speakers)
 
     # local_weights_path = "./weights/whisper_diarization_v3.pth"
-    torch.save(model.state_dict(), "./weights/whisper_diarization_ami_v1.pth")
+    # torch.save(model.state_dict(), "./weights/whisper_diarization_ami_v1.pth")
+    wandb.save("whisper_diarization_ami.pth")
     # minio.save_weights(local_weights_path, "whisper_diarization", "v3")
 
 if __name__ == "__main__":

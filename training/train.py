@@ -11,6 +11,22 @@ from backend.minio_client import MinioClientWrapper
 from training.validation import validate_batch
 import tempfile
 
+def compute_batch_loss(model, batch, device, criterion):
+    audio = batch['input_features'].to(device)
+
+    # Shift for teacher forcing
+    input_ids = batch['input_ids'][:, :-1].contiguous().to(device)
+    attention_mask = batch['attention_mask'][:, :-1].contiguous().to(device)
+    target_ids = batch['input_ids'][:, 1:].clone().contiguous().to(device)
+
+    outputs = model(
+        audio,
+        attention_mask,
+        input_ids, 
+    )
+
+    loss = criterion(outputs.logits.transpose(1, 2), target_ids)
+    return loss
 
 def save_checkpoint(model, optimizer, epoch, global_step):
     """Saves model and optimizer state as a checkpoint directly to wandb."""    
@@ -51,21 +67,7 @@ def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=5, numb
             # print(f"batch")
             audio = batch['input_features'].to(device)
 
-            # shift for teacher forcing
-            input_ids = batch['input_ids'][:, :-1].contiguous().to(device)
-            attention_mask = batch['attention_mask'][:, :-1].contiguous().to(device)
-            target_ids = batch['input_ids'][:, 1:].clone().contiguous().to(device)
-
-            optimizer.zero_grad()
-            
-            outputs = model(
-                audio,
-                attention_mask,
-                input_ids, 
-            )
-            # print(f"output")
-            
-            loss = criterion(outputs.logits.transpose(1, 2), target_ids)
+            loss = compute_batch_loss(model, batch, device, criterion)
             loss.backward()
 
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
@@ -82,12 +84,20 @@ def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=5, numb
 
         model.eval()
         with torch.no_grad():
-            for _, val_batch in tqdm(enumerate(val_dataloader)):
-                avg_der = validate_batch(model, val_batch['input_features'], val_batch['text'], tokenizer, numbered_speakers=numbered_speakers)
-                wandb.log({
-                    "avg_der": avg_der,
-                    "epoch": epoch
-                })
+            total_der = 0
+            total_val_loss = 0
+            for val_batch in tqdm(val_dataloader):
+                der = validate_batch(model, val_batch['input_features'], val_batch['text'], tokenizer, numbered_speakers=numbered_speakers)
+                total_der += der
+                val_loss = compute_batch_loss(model, val_batch, device, criterion)
+                total_val_loss += val_loss.item()
+        
+            wandb.log({
+                "avg_der": total_der / len(val_dataloader),
+                "val_loss": total_val_loss / len(val_dataloader),
+                "epoch": epoch
+            })
+        
 
 def main():
     numbered_speakers=False
@@ -101,10 +111,10 @@ def main():
     print("datasets and dataloaders")
     # train_dataset = HomegrownDataset(split='train', numbered_speakers=numbered_speakers)
     # TODO better design isto pass tokenizer into Ami
-    train_dataset = Ami(split="train")
+    train_dataset = Ami(split="train", subset_size=100)
     # because the actual length of the dataset is unpredictable ( it depends on how the conversations get chunked up) we need drop_last=True or there
     # may be mismatch and the dataloader will try to iterate too many time
-    train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True, collate_fn=Ami.get_collate_fn(train_dataset.tk, train_dataset.extractor))
+    train_dataloader = DataLoader(train_dataset, batch_size=2, shuffle=True, collate_fn=Ami.get_collate_fn(train_dataset.tk, train_dataset.extractor))
 
     val_dataset = Ami(split="validation", subset_size=100)
     val_dataloader = DataLoader(val_dataset, batch_size=2, collate_fn=Ami.get_collate_fn(val_dataset.tk, val_dataset.extractor))

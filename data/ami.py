@@ -52,7 +52,8 @@ class Ami(Dataset):
             else:
                 current_chunk['audio'].append(audio)
                 if speaker_id != current_chunk['prev_speaker']:
-                    current_chunk['text'].append(f" {self.speaker_label} {text}")
+                    current_chunk['text'].append(self.speaker_label)
+                    current_chunk['text'].append(text)
                 else:
                     current_chunk['text'].append(text)
                 current_audio_length += len(audio)

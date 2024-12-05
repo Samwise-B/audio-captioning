@@ -41,6 +41,8 @@ def save_checkpoint(model, optimizer, epoch, global_step):
     print(f"Checkpoint saved to wandb at epoch {epoch}, step {global_step}")
 
 def train(model, train_dataloader, tokenizer, num_epochs=10, numbered_speakers=True):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
     criterion = torch.nn.CrossEntropyLoss()
     
@@ -50,12 +52,12 @@ def train(model, train_dataloader, tokenizer, num_epochs=10, numbered_speakers=T
         total_loss = 0
         for batch in tqdm(train_dataloader):
             # print(f"batch")
-            audio = batch['input_features']
+            audio = batch['input_features'].to(device)
 
             # shift for teacher forcing
-            input_ids = batch['input_ids'][:, :-1].contiguous()
-            attention_mask = batch['attention_mask'][:, :-1].contiguous()
-            target_ids = batch['input_ids'][:, 1:].clone().contiguous()
+            input_ids = batch['input_ids'][:, :-1].contiguous().to(device)
+            attention_mask = batch['attention_mask'][:, :-1].contiguous().to(device)
+            target_ids = batch['input_ids'][:, 1:].clone().contiguous().to(device)
 
             optimizer.zero_grad()
             

@@ -114,7 +114,7 @@ def main():
     # val_dataloader = DataLoader(val_dataset, batch_size=32, collate_fn=Ami.get_collate_fn(val_dataset.tk, val_dataset.extractor))
     print("finished datasets and dataloaders")
 
-    train(model, train_dataloader, tokenizer, numbered_speakers=numbered_speakers)
+    train(model, train_dataloader, tokenizer, num_epochs=5, numbered_speakers=numbered_speakers)
 
     torch.save(model.state_dict(), "whisper_diarization_ami.pth")
     artifact = wandb.Artifact('whisper_model', type='model')

@@ -40,7 +40,7 @@ def save_checkpoint(model, optimizer, epoch, global_step):
     
     print(f"Checkpoint saved to wandb at epoch {epoch}, step {global_step}")
 
-def train(model, train_dataloader, tokenizer, num_epochs=10, numbered_speakers=True):
+def train(model, train_dataloader, tokenizer, num_epochs=5, numbered_speakers=True):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
@@ -104,10 +104,10 @@ def main():
     print("datasets and dataloaders")
     # train_dataset = HomegrownDataset(split='train', numbered_speakers=numbered_speakers)
     # TODO better design isto pass tokenizer into Ami
-    train_dataset = Ami(split="train", subset_size=100)
+    train_dataset = Ami(split="train", subset_size=5000)
     # because the actual length of the dataset is unpredictable ( it depends on how the conversations get chunked up) we need drop_last=True or there
     # may be mismatch and the dataloader will try to iterate too many time
-    train_dataloader = DataLoader(train_dataset, batch_size=2, collate_fn=Ami.get_collate_fn(train_dataset.tk, train_dataset.extractor))
+    train_dataloader = DataLoader(train_dataset, batch_size=64, collate_fn=Ami.get_collate_fn(train_dataset.tk, train_dataset.extractor))
 
     # val_dataset = HomegrownDataset(split='validate', numbered_speakers=numbered_speakers)
     # val_dataset = Ami(split="validation", subset_size=500)

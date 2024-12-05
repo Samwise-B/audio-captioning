@@ -1,22 +1,33 @@
-import whisper
+import os
+import wandb
 
 import torch
 from torch.utils.data import DataLoader
 
-from data.homegrown import HomegrownDataset
+from data.ami import Ami
 from models.CustomWhisper import CustomWhisper
-from training.utils import collate_fn
 from training.validation import validate_batch
 
 def main():
-    custom_model_wrapper = CustomWhisper(base_model="openai/whisper-tiny", max_speakers=5)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    wandb.init(project='whisper-diarization', job_type='inference')
+    custom_model_wrapper = CustomWhisper(base_model="openai/whisper-tiny", max_speakers=5, numbered_speakers=False)
     model = custom_model_wrapper.model
-    model.load_state_dict(torch.load("./weights/whisper_diarization_v3.pth", weights_only=True))
-    dataset = HomegrownDataset(split='validate')
-    dataloader = DataLoader(dataset, batch_size=2, collate_fn=collate_fn)
+
+    # Use wandb artifact
+    artifact = wandb.use_artifact('whisper-diarization/whisper_model:latest', type='model')
+    artifact_dir = artifact.download()
+
+    # Load model weights from artifact
+    weights_file = os.path.join(artifact_dir, 'whisper_diarization_ami.pth')
+    state_dict = torch.load(weights_file, map_location=torch.device(device))
+    model.load_state_dict(state_dict)
+
+    dataset = Ami(split='validation', subset_size=100)
+    dataloader = DataLoader(dataset, batch_size=2, collate_fn=Ami.get_collate_fn(dataset.tk, dataset.extractor))
     for batch in dataloader:
-        audio = batch['audio']
-        validate_batch(model, audio, batch['texts'], custom_model_wrapper.tokenizer)
+        audio = batch['input_features']
+        validate_batch(model, audio, batch['text'], dataset.tk, numbered_speakers=False)
 
 if __name__ == "__main__":
     main()

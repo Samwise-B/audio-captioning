@@ -1,4 +1,3 @@
-from io import BytesIO
 import os
 import torch
 from torch.utils.data import DataLoader
@@ -6,9 +5,7 @@ from tqdm import tqdm
 import wandb
 
 from data.ami import Ami
-from data.homegrown import HomegrownDataset
 from models.CustomWhisper import CustomWhisper
-from training.utils import collate_fn
 
 from backend.minio_client import MinioClientWrapper
 from training.validation import validate_batch
@@ -40,7 +37,7 @@ def save_checkpoint(model, optimizer, epoch, global_step):
     
     print(f"Checkpoint saved to wandb at epoch {epoch}, step {global_step}")
 
-def train(model, train_dataloader, tokenizer, num_epochs=5, numbered_speakers=True):
+def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=5, numbered_speakers=False):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
@@ -83,20 +80,20 @@ def train(model, train_dataloader, tokenizer, num_epochs=5, numbered_speakers=Tr
 
         save_checkpoint(model, optimizer, epoch, global_step)
 
-        # model.eval()
-        # with torch.no_grad():
-        #     for _, val_batch in tqdm(enumerate(val_dataloader)):
-        #         avg_der = validate_batch(model, val_batch['input_features'], val_batch['text'], tokenizer, numbered_speakers=numbered_speakers)
-        #         wandb.log({
-        #             "avg_der": avg_der,
-        #             "epoch": epoch
-        #         })
+        model.eval()
+        with torch.no_grad():
+            for _, val_batch in tqdm(enumerate(val_dataloader)):
+                avg_der = validate_batch(model, val_batch['input_features'], val_batch['text'], tokenizer, numbered_speakers=numbered_speakers)
+                wandb.log({
+                    "avg_der": avg_der,
+                    "epoch": epoch
+                })
 
 def main():
     numbered_speakers=False
     wandb.init(project="whisper-diarization", name="training_run")
 
-    custom_model_wrapper = CustomWhisper(base_model="openai/whisper-tiny", max_speakers=5, numbered_speakers=False)
+    custom_model_wrapper = CustomWhisper(base_model="openai/whisper-tiny", max_speakers=5, numbered_speakers=numbered_speakers)
     tokenizer = custom_model_wrapper.tokenizer
     model = custom_model_wrapper.model
 
@@ -109,18 +106,16 @@ def main():
     # may be mismatch and the dataloader will try to iterate too many time
     train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True, collate_fn=Ami.get_collate_fn(train_dataset.tk, train_dataset.extractor))
 
-    # val_dataset = HomegrownDataset(split='validate', numbered_speakers=numbered_speakers)
-    # val_dataset = Ami(split="validation", subset_size=500)
-    # val_dataloader = DataLoader(val_dataset, batch_size=32, collate_fn=Ami.get_collate_fn(val_dataset.tk, val_dataset.extractor))
+    val_dataset = Ami(split="validation", subset_size=100)
+    val_dataloader = DataLoader(val_dataset, batch_size=2, collate_fn=Ami.get_collate_fn(val_dataset.tk, val_dataset.extractor))
     print("finished datasets and dataloaders")
 
-    train(model, train_dataloader, tokenizer, num_epochs=5, numbered_speakers=numbered_speakers)
+    train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=5, numbered_speakers=numbered_speakers)
 
     torch.save(model.state_dict(), "whisper_diarization_ami.pth")
     artifact = wandb.Artifact('whisper_model', type='model')
     artifact.add_file("whisper_diarization_ami.pth")
     wandb.log_artifact(artifact)
-    # minio.save_weights(local_weights_path, "whisper_diarization", "v3")
 
 if __name__ == "__main__":
     main()

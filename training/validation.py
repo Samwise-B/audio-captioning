@@ -15,12 +15,12 @@ def validate_batch(model, audio, targets, tokenizer, numbered_speakers=True):
         prediction = infer(model, audio_i, tokenizer)
         prediction = clean_prediction(prediction)
         
-        print("===================")
-        print(f"Batch item {batch_idx}\n")
-        print(f"Target:\n")
-        print(target)
-        print(f"\nPrediction:\n")
-        print(prediction)
+        # print("===================")
+        # print(f"Batch item {batch_idx}\n")
+        # print(f"Target:\n")
+        # print(target)
+        # print(f"\nPrediction:\n")
+        # print(prediction)
 
         if numbered_speakers:
             output_utterances = parse_transcript_numbered(prediction)

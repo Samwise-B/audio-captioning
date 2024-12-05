@@ -60,6 +60,7 @@ class Ami(Dataset):
 
         if current_chunk['audio']:
             chunks.append(current_chunk)
+        print(f"finished precomputing chunks. Length: {len(chunks)}")
         return chunks
 
     def __len__(self):

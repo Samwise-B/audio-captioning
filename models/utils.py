@@ -28,17 +28,21 @@ def clean_prediction(decoded_text):
     return decoded_text
 
 def infer(model, input_mel, tokenizer):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     eot_token = '<|endoftranscript|>'
     eot_token_id = tokenizer.convert_tokens_to_ids(eot_token)
     model.eval()
+    model.to(device)
     with torch.no_grad():
+        # Ensure input_mel is on the same device as the model
+        input_mel = input_mel.to(device)
         #  this is different to how I tokenize in the collate_fn
         input_ids = get_start_input_ids(tokenizer) # 50258, 50363 ('<|startoftranscript|>', '<|notimestamps|>')
-        input_tkns_tensor = torch.tensor(input_ids).unsqueeze(0).to(model.device)
+        input_tkns_tensor = torch.tensor(input_ids).unsqueeze(0).to(device)
 
         for i in range(80):
             initial_predictions = model(decoder_input_ids=input_tkns_tensor, input_features=input_mel)
-            next_tkn = torch.argmax(initial_predictions.logits, dim=-1)[0,-1].unsqueeze(0)
+            next_tkn = torch.argmax(initial_predictions.logits, dim=-1)[0,-1].unsqueeze(0).to(device)
             input_tkns_tensor = torch.cat((input_tkns_tensor.squeeze(), next_tkn), dim=0).unsqueeze(0)
             if input_tkns_tensor[-1, -1].item() == eot_token_id:
                 break

@@ -116,9 +116,10 @@ def main():
 
     train(model, train_dataloader, tokenizer, numbered_speakers=numbered_speakers)
 
-    # local_weights_path = "./weights/whisper_diarization_v3.pth"
-    # torch.save(model.state_dict(), "./weights/whisper_diarization_ami_v1.pth")
-    wandb.save("whisper_diarization_ami.pth")
+    torch.save(model.state_dict(), "whisper_diarization_ami.pth")
+    artifact = wandb.Artifact('whisper_model', type='model')
+    artifact.add_file("whisper_diarization_ami.pth")
+    wandb.log_artifact(artifact)
     # minio.save_weights(local_weights_path, "whisper_diarization", "v3")
 
 if __name__ == "__main__":

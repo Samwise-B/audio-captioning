@@ -32,6 +32,7 @@ class Ami(Dataset):
 
     def _precompute_chunks(self):
         logging.info("Precomputing dataset chunks")
+        print("Precomputing dataset chunks")
         chunks = []
         current_chunk = {'audio': [], 'text': [], 'meeting_id': None, 'prev_speaker': None}
         current_audio_length = 0

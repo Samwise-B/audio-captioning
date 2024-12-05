@@ -12,34 +12,35 @@ from training.utils import collate_fn
 
 from backend.minio_client import MinioClientWrapper
 from training.validation import validate_batch
+import tempfile
 
-def save_checkpoint(model, optimizer, epoch, global_step, run=None):
-    """Saves model and optimizer state as a checkpoint directly to wandb."""
-    if run is None:
-        run = wandb.run
-    
-    # Save checkpoint to buffer in memory
-    buffer = BytesIO()
-    torch.save({
-        'epoch': epoch,
-        'global_step': global_step,
-        'model_state_dict': model.state_dict(),
-        'optimizer_state_dict': optimizer.state_dict(),
-    }, buffer)
-    buffer.seek(0)
-    
-    # Create and log artifact
-    artifact = wandb.Artifact(
-        name=f'model-checkpoint-{epoch}',
-        type='model',
-        description=f'Model checkpoint from epoch {epoch}, step {global_step}'
-    )
-    artifact.add_file('checkpoint.pth', buffer)
-    run.log_artifact(artifact)
+
+def save_checkpoint(model, optimizer, epoch, global_step):
+    """Saves model and optimizer state as a checkpoint directly to wandb."""    
+    # Create temporary file
+    with tempfile.NamedTemporaryFile(suffix='.pth', delete=False) as tmp_file:
+        torch.save({
+            'epoch': epoch,
+            'global_step': global_step,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+        }, tmp_file.name)
+        
+        # Create and log artifact
+        artifact = wandb.Artifact(
+            name=f'model-checkpoint-{epoch}',
+            type='model',
+            description=f'Model checkpoint from epoch {epoch}, step {global_step}'
+        )
+        artifact.add_file(tmp_file.name)
+        wandb.log_artifact(artifact)
+        
+    # Clean up temp file
+    os.remove(tmp_file.name)
     
     print(f"Checkpoint saved to wandb at epoch {epoch}, step {global_step}")
 
-def train(model, train_dataloader, tokenizer, num_epochs=10, numbered_speakers=True, checkpoint_dir="./checkpoints"):
+def train(model, train_dataloader, tokenizer, num_epochs=10, numbered_speakers=True):
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
     criterion = torch.nn.CrossEntropyLoss()
     
@@ -78,7 +79,7 @@ def train(model, train_dataloader, tokenizer, num_epochs=10, numbered_speakers=T
         avg_loss = total_loss / len(train_dataloader)
         wandb.log({"epoch_loss": avg_loss, "epoch": epoch})
 
-        save_checkpoint(model, optimizer, epoch, global_step, checkpoint_dir)
+        save_checkpoint(model, optimizer, epoch, global_step)
 
         # model.eval()
         # with torch.no_grad():
@@ -101,10 +102,10 @@ def main():
     print("datasets and dataloaders")
     # train_dataset = HomegrownDataset(split='train', numbered_speakers=numbered_speakers)
     # TODO better design isto pass tokenizer into Ami
-    train_dataset = Ami(split="train", subset_size=1000)
+    train_dataset = Ami(split="train", subset_size=100)
     # because the actual length of the dataset is unpredictable ( it depends on how the conversations get chunked up) we need drop_last=True or there
     # may be mismatch and the dataloader will try to iterate too many time
-    train_dataloader = DataLoader(train_dataset, batch_size=32, collate_fn=Ami.get_collate_fn(train_dataset.tk, train_dataset.extractor))
+    train_dataloader = DataLoader(train_dataset, batch_size=2, collate_fn=Ami.get_collate_fn(train_dataset.tk, train_dataset.extractor))
 
     # val_dataset = HomegrownDataset(split='validate', numbered_speakers=numbered_speakers)
     # val_dataset = Ami(split="validation", subset_size=500)

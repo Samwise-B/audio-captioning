@@ -86,14 +86,17 @@ def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=5, numb
         with torch.no_grad():
             total_der = 0
             total_val_loss = 0
+            total_wer = 0
             for val_batch in tqdm(val_dataloader):
-                der = validate_batch(model, val_batch['input_features'], val_batch['text'], tokenizer, numbered_speakers=numbered_speakers)
+                der, wer = validate_batch(model, val_batch['input_features'], val_batch['text'], tokenizer, numbered_speakers=numbered_speakers)
                 total_der += der
+                total_wer += wer
                 val_loss = compute_batch_loss(model, val_batch, device, criterion)
                 total_val_loss += val_loss.item()
         
             wandb.log({
                 "avg_der": total_der / len(val_dataloader),
+                "avg_wer": total_wer / len(val_dataloader),
                 "val_loss": total_val_loss / len(val_dataloader),
                 "epoch": epoch
             })

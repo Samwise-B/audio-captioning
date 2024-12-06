@@ -93,7 +93,7 @@ def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=5, numb
         
             wandb.log({
                 "avg_der": total_der / len(val_dataloader),
-                "avg_wer": f"{total_wer / len(val_dataloader):.2f}",
+                "avg_wer": total_wer / len(val_dataloader),
                 "val_loss": total_val_loss / len(val_dataloader),
                 "epoch": epoch
             })

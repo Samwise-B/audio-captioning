@@ -53,7 +53,7 @@ def save_checkpoint(model, optimizer, epoch, global_step):
     
     print(f"Checkpoint saved to wandb at epoch {epoch}, step {global_step}")
 
-def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=5, numbered_speakers=False):
+def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=4, numbered_speakers=False):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
@@ -90,11 +90,12 @@ def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=5, numb
                 total_wer += wer
                 val_loss = compute_batch_loss(model, val_batch, device, criterion)
                 total_val_loss += val_loss.item()
+                wandb.log({"val_loss": val_loss.item(), "der": der, "wer": wer,  "global_step": global_step})
         
             wandb.log({
-                "avg_der": total_der / len(val_dataloader),
-                "avg_wer": total_wer / len(val_dataloader),
-                "val_loss": total_val_loss / len(val_dataloader),
+                "epocj_der": total_der / len(val_dataloader),
+                "epoch_wer": total_wer / len(val_dataloader),
+                "epoch_val_loss": total_val_loss / len(val_dataloader),
                 "epoch": epoch
             })
         
@@ -113,10 +114,10 @@ def main():
     train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True, collate_fn=Ami.get_collate_fn(train_dataset.tk, train_dataset.extractor))
 
     val_dataset = Ami(split="validation", subset_size=100)
-    val_dataloader = DataLoader(val_dataset, batch_size=4, collate_fn=Ami.get_collate_fn(val_dataset.tk, val_dataset.extractor))
+    val_dataloader = DataLoader(val_dataset, batch_size=4, shuffle=True, collate_fn=Ami.get_collate_fn(val_dataset.tk, val_dataset.extractor))
     print("finished datasets and dataloaders")
 
-    train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=5, numbered_speakers=numbered_speakers)
+    train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=4)
 
     torch.save(model.state_dict(), "whisper_diarization_ami.pth")
     artifact = wandb.Artifact('whisper_model', type='model')

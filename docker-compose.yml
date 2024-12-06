@@ -49,19 +49,6 @@ services:
     networks:
       - app_network
 
-  training:
-    build:
-      context: ./training
-    container_name: training
-    volumes:
-      - .:/app # Mount everything at root level
-    working_dir: /app # Set the working directory to root
-    networks:
-      - app_network
-    stdin_open: true
-    tty: true
-    command: /bin/bash
-
 networks:
   app_network:
     driver: bridge

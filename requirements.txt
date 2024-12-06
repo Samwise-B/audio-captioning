@@ -16,3 +16,4 @@ pydub
 transformers
 wandb
 torchaudio
+jiwer

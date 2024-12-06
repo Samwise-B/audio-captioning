@@ -93,7 +93,7 @@ def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=4, numb
                 wandb.log({"val_loss": val_loss.item(), "der": der, "wer": wer,  "global_step": global_step})
         
             wandb.log({
-                "epocj_der": total_der / len(val_dataloader),
+                "epoch_der": total_der / len(val_dataloader),
                 "epoch_wer": total_wer / len(val_dataloader),
                 "epoch_val_loss": total_val_loss / len(val_dataloader),
                 "epoch": epoch
@@ -113,8 +113,8 @@ def main():
     train_dataset = Ami(split="train")
     train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True, collate_fn=Ami.get_collate_fn(train_dataset.tk, train_dataset.extractor))
 
-    val_dataset = Ami(split="validation", subset_size=100)
-    val_dataloader = DataLoader(val_dataset, batch_size=4, shuffle=True, collate_fn=Ami.get_collate_fn(val_dataset.tk, val_dataset.extractor))
+    val_dataset = Ami(split="validation", subset_size=1000)
+    val_dataloader = DataLoader(val_dataset, batch_size=16, shuffle=True, collate_fn=Ami.get_collate_fn(val_dataset.tk, val_dataset.extractor))
     print("finished datasets and dataloaders")
 
     train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=4)

@@ -37,13 +37,13 @@ class CustomWhisper(nn.Module):
         self.tokenizer.add_special_tokens(self.new_tokens)
         self.model.resize_token_embeddings(len(self.tokenizer))
          # Freeze all parameters
-        # for param in self.model.parameters():
-        #     param.requires_grad = False
+        for param in self.model.parameters():
+            param.requires_grad = False
 
         # Only enable grads for decoder embeddings
-        # embed_tokens = self.model.model.decoder.embed_tokens
-        # for param in embed_tokens.parameters():
-        #     param.requires_grad = True
+        embed_tokens = self.model.model.decoder.embed_tokens
+        for param in embed_tokens.parameters():
+            param.requires_grad = True
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(f"device:{device}")
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

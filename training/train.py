@@ -64,9 +64,6 @@ def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=5, numb
         model.train()
         total_loss = 0
         for batch in tqdm(train_dataloader):
-            # print(f"batch")
-            audio = batch['input_features'].to(device)
-
             loss = compute_batch_loss(model, batch, device, criterion)
             loss.backward()
 
@@ -96,7 +93,7 @@ def train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=5, numb
         
             wandb.log({
                 "avg_der": total_der / len(val_dataloader),
-                "avg_wer": total_wer / len(val_dataloader),
+                "avg_wer": f"{total_wer / len(val_dataloader):.2f}",
                 "val_loss": total_val_loss / len(val_dataloader),
                 "epoch": epoch
             })
@@ -112,15 +109,11 @@ def main():
 
     # minio = MinioClientWrapper()
     print("datasets and dataloaders")
-    # train_dataset = HomegrownDataset(split='train', numbered_speakers=numbered_speakers)
-    # TODO better design isto pass tokenizer into Ami
-    train_dataset = Ami(split="train", subset_size=100)
-    # because the actual length of the dataset is unpredictable ( it depends on how the conversations get chunked up) we need drop_last=True or there
-    # may be mismatch and the dataloader will try to iterate too many time
-    train_dataloader = DataLoader(train_dataset, batch_size=2, shuffle=True, collate_fn=Ami.get_collate_fn(train_dataset.tk, train_dataset.extractor))
+    train_dataset = Ami(split="train")
+    train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True, collate_fn=Ami.get_collate_fn(train_dataset.tk, train_dataset.extractor))
 
     val_dataset = Ami(split="validation", subset_size=100)
-    val_dataloader = DataLoader(val_dataset, batch_size=2, collate_fn=Ami.get_collate_fn(val_dataset.tk, val_dataset.extractor))
+    val_dataloader = DataLoader(val_dataset, batch_size=4, collate_fn=Ami.get_collate_fn(val_dataset.tk, val_dataset.extractor))
     print("finished datasets and dataloaders")
 
     train(model, train_dataloader, val_dataloader, tokenizer, num_epochs=5, numbered_speakers=numbered_speakers)

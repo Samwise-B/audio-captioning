@@ -10,7 +10,6 @@ def validate_batch(model, audio, targets, tokenizer, numbered_speakers=True):
     model.eval()
     batch_size = audio.shape[0]
     total_der = 0
-    targets = []
     predictions = []
     for batch_idx in range(batch_size):
 
@@ -19,7 +18,6 @@ def validate_batch(model, audio, targets, tokenizer, numbered_speakers=True):
         prediction = infer(model, audio_i, tokenizer)
         prediction = clean_prediction(prediction)
         predictions.append(prediction)
-        targets.append(target)
 
         if numbered_speakers:
             output_utterances = parse_transcript_numbered(prediction)
